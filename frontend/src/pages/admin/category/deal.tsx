@@ -55,7 +55,7 @@ function del(): React.ReactElement {
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         };
 
-        const response = await fetch("http://127.0.0.1:10007/api/v1/offer/list", {
+        const response = await fetch("https://furnspace.onrender.com/api/v1/offer/list", {
           method: "GET",
           headers: headersList
         });
@@ -127,7 +127,7 @@ function del(): React.ReactElement {
       return;
     }
 
-    const url = `http://127.0.0.1:10007/api/v1/furniture/update-furniture`;
+    const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
 
     const formDataToSend = new FormData();
     formDataToSend.append("data", JSON.stringify({
@@ -191,7 +191,7 @@ function del(): React.ReactElement {
     const bodyContent = JSON.stringify({});
 
     try {
-      const response = await fetch(`http://127.0.0.1:10007/api/v1/furniture/delete/${furnitureId}`, {
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/delete/${furnitureId}`, {
         method: "POST",
         body: bodyContent,
         headers: headersList

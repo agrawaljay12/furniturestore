@@ -61,7 +61,7 @@ function matt(): React.ReactElement {
           title: "mattress" // Fetch only tables
         });
 
-        let response = await fetch("http://127.0.0.1:10007/api/v1/furniture/list_all", {
+        let response = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", {
           method: "POST",
           body: bodyContent,
           headers: headersList
@@ -123,7 +123,7 @@ function matt(): React.ReactElement {
     }
 
     // Always use FormData for consistency
-    const url = `http://127.0.0.1:10007/api/v1/furniture/update-furniture`;
+    const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
     const formDataToSend = new FormData();
     
     // Prepare the data object with all furniture details and image context
@@ -180,7 +180,7 @@ function matt(): React.ReactElement {
               title: "matt" // Fetch only matt items
             });
 
-            let response = await fetch("http://127.0.0.1:10007/api/v1/furniture/list_all", {
+            let response = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", {
               method: "POST",
               body: bodyContent,
               headers: headersList
@@ -284,7 +284,7 @@ function matt(): React.ReactElement {
     const bodyContent = JSON.stringify({});
 
     try {
-        const response = await fetch(`http://127.0.0.1:10007/api/v1/furniture/delete/${furnitureId}`, {
+        const response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/delete/${furnitureId}`, {
             method: "POST",
             body: bodyContent,
             headers: headersList

@@ -58,7 +58,7 @@ const updateMetaTags = (product: Product | null) => {
     const productImageUrl = product?.images && product.images.length > 0 
       ? (product.images[0].startsWith('http') 
           ? product.images[0] 
-          : `http://127.0.0.1:10007/${product.images[0]}`)
+          : `https://furnspace.onrender.com/${product.images[0]}`)
       : (product?.image || '');
     
     // Helper function to create or update a meta tag
@@ -134,7 +134,7 @@ const ProductView: React.FC = () => {
       const fetchProduct = async () => {
         try {
           const response = await fetch(
-            `http://127.0.0.1:10007/api/v1/furniture/get/${productId}`
+            `https://furnspace.onrender.com/api/v1/furniture/get/${productId}`
           );
           if (!response.ok) throw new Error("Failed to fetch product details");
 
@@ -197,7 +197,7 @@ const ProductView: React.FC = () => {
         "title": ""
       });
       
-      let response = await fetch("http://127.0.0.1:10007/api/v1/furniture/list_all", { 
+      let response = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", { 
         method: "POST",
         body: bodyContent,
         headers: headersList
@@ -240,7 +240,7 @@ const ProductView: React.FC = () => {
             "title": ""
           });
           
-          let broadResponse = await fetch("http://127.0.0.1:10007/api/v1/furniture/list_all", { 
+          let broadResponse = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", { 
             method: "POST",
             body: broadSearchBody,
             headers: headersList

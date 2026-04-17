@@ -79,7 +79,7 @@ const LivingPage: React.FC = () => {
 
       try {
         const response = await fetch(
-          "http://127.0.0.1:10007/api/v1/furniture/list_all",
+          "https://furnspace.onrender.com/api/v1/furniture/list_all",
           {
             method: "POST",
             body: bodyContent,
