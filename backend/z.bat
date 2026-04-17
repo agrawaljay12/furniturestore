@@ -1,0 +1,1 @@
+venv\Scripts\Activate && python server.py
