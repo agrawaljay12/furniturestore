@@ -18,7 +18,7 @@ const ListModerator: React.FC = () => {
     }
 
     try {
-      const response = await axios.post("http://127.0.0.1:10007/api/v1/auth/get_users", {}, {
+      const response = await axios.post("https://furnspace.onrender.com/api/v1/auth/get_users", {}, {
 
         headers: {
           Authorization: `Bearer ${token}`,
@@ -58,7 +58,7 @@ const ListModerator: React.FC = () => {
     let bodyContent = JSON.stringify({}); // Empty body content
 
     try {
-      let response = await fetch(`http://127.0.0.1:10007/api/v1/auth/delete_user/${userId}`, {
+      let response = await fetch(`https://furnspace.onrender.com/api/v1/auth/delete_user/${userId}`, {
         method: "POST",
         body: bodyContent,
         headers: headersList

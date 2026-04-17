@@ -56,7 +56,7 @@ function ListFurniture(): React.ReactElement {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:10007/api/v1/furniture/list_all",
+        "https://furnspace.onrender.com/api/v1/furniture/list_all",
         {
           method: "POST",
           body: bodyContent,
@@ -128,7 +128,7 @@ function ListFurniture(): React.ReactElement {
     setIsLoading(true);
     setError("Updating furniture...");
 
-    const url = `http://127.0.0.1:10007/api/v1/furniture/update-furniture`;
+    const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
     const formDataToSend = new FormData();
     
     const currentImageType = selectedFurniture.images && selectedFurniture.images.length > 0 ? 'multiple' : 'single';
@@ -272,7 +272,7 @@ function ListFurniture(): React.ReactElement {
     }
 
     try {
-        const response = await fetch(`http://127.0.0.1:10007/api/v1/furniture/delete/${furnitureId}`, {
+        const response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/delete/${furnitureId}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

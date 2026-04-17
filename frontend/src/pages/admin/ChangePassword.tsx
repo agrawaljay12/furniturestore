@@ -30,7 +30,7 @@ const ChangePassword: React.FC = () => {
         "confirm_password": confirmPassword
       });
 
-      let response = await fetch(`http://127.0.0.1:10007/api/v1/auth/change_password/${userid}`, { 
+      let response = await fetch(`https://furnspace.onrender.com/api/v1/auth/change_password/${userid}`, { 
         method: "POST",
         body: bodyContent,
         headers: headersList

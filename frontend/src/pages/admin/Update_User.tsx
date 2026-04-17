@@ -48,7 +48,7 @@ const UpdateUserPage = () => {
         }
 
         try {
-            const response = await axios.put(`http://localhost:10007/api/v1/auth/user/${userId}/update`, formData, {
+            const response = await axios.put(`https://furnspace.onrender.com/api/v1/auth/user/${userId}/update`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -56,7 +56,7 @@ const UpdateUserPage = () => {
 
             const updatedData = response.data.data;
             setMessage('User details updated successfully');
-            setProfilePicUrl(updatedData.profile_pic || 'http://localhost:10007/files/default.png');
+            setProfilePicUrl(updatedData.profile_pic || 'https://furnspace.onrender.com/files/default.png');
             setUserData({
                 ...userData,
                 ...updatedData,

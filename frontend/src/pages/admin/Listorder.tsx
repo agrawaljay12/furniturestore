@@ -51,7 +51,7 @@ interface UserDetails {
 const getImageUrl = (imagePath: string | undefined, paymentId?: string): string => {
   if (!imagePath) {
     if (paymentId) {
-      return `http://localhost:10007/api/v1/payments/${paymentId}/receipt`;
+      return `https://furnspace.onrender.com/api/v1/payments/${paymentId}/receipt`;
     }
     return "https://placehold.co/100x100/e0e0e0/808080?text=No+Image";
   }
@@ -62,7 +62,7 @@ const getImageUrl = (imagePath: string | undefined, paymentId?: string): string 
   
   // Check if path is a relative URL that needs base URL prepended
   const formattedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  return `http://localhost:10007${formattedPath}`;
+  return `https://furnspace.onrender.com${formattedPath}`;
 };
 
 const Listorder: React.FC = () => {
@@ -101,7 +101,7 @@ const Listorder: React.FC = () => {
         "User-Agent": "Thunder Client (https://www.thunderclient.com)"
       };
       
-      const response = await fetch(`http://localhost:10007/api/v1/auth/user/fetch/${userId}`, { 
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`, { 
         method: "GET",
         headers: headersList
       });
@@ -166,7 +166,7 @@ const Listorder: React.FC = () => {
 
         console.log("Fetching orders from API...");
         
-        let response = await fetch("http://localhost:10007/api/v1/booking/get_booking", { 
+        let response = await fetch("https://furnspace.onrender.com/api/v1/booking/get_booking", { 
           method: "GET",
           headers: headersList
         });

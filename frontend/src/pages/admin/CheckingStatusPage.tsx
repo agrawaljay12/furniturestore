@@ -13,7 +13,7 @@ const CheckingStatusPage: React.FC = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:10007/api/v1/orders/status"); // Your API endpoint
+        const response = await axios.get("https://furnspace.onrender.com/api/v1/orders/status"); // Your API endpoint
         setOrders(response.data.orders); // Assuming the response contains an array of orders
       } catch (error) {
         console.error("Error fetching orders:", error);

@@ -25,7 +25,7 @@ const UpdateFurniturePage = () => {
   useEffect(() => {
     const fetchFurnitureData = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:10007/api/v1/furniture/${furnitureId}`);
+        const response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/${furnitureId}`);
         const data = await response.json();
         setFurnitureData(data);
       } catch (error) {
@@ -80,7 +80,7 @@ const UpdateFurniturePage = () => {
     });
 
     try {
-      const response = await fetch(`http://127.0.0.1:10007/api/v1/furniture/update/${furnitureId}`, {
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/update/${furnitureId}`, {
         method: 'PUT',
         headers: headersList,
         body: bodyContent,

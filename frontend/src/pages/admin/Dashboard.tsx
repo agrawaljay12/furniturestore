@@ -48,7 +48,7 @@ const Dashboard: React.FC = () => {
         };
 
         const response = await axios.post(
-          "http://127.0.0.1:10007/api/v1/auth/get_users",
+          "https://furnspace.onrender.com/api/v1/auth/get_users",
           {}, 
           { headers }
         );
@@ -84,7 +84,7 @@ const Dashboard: React.FC = () => {
           "title": "" 
         });
 
-        const response = await fetch("http://127.0.0.1:10007/api/v1/furniture/list_all", { 
+        const response = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", { 
           method: "POST", 
           body: bodyContent, 
           headers: headersList 
@@ -115,7 +115,7 @@ const Dashboard: React.FC = () => {
           "Content-Type": "application/json"
         };
 
-        const response = await fetch(`http://localhost:10007/api/v1/booking/revenue_statistics?period=${selectedPeriod}`, { 
+        const response = await fetch(`https://furnspace.onrender.com/api/v1/booking/revenue_statistics?period=${selectedPeriod}`, { 
           method: "GET",
           headers: headersList
         });
@@ -250,7 +250,7 @@ const Dashboard: React.FC = () => {
       console.log("Fetching user with ID:", userId);
 
       // Use the exact API endpoint format from the example
-      const response = await fetch(`http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`, { 
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`, { 
         method: "GET",
         headers: headersList
       });
@@ -317,7 +317,7 @@ const Dashboard: React.FC = () => {
       console.log("Fetching furniture with ID:", furnitureId);
 
       // Direct API call to get specific furniture item by ID
-      const response = await fetch(`http://127.0.0.1:10007/api/v1/furniture/${furnitureId}`, { 
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/${furnitureId}`, { 
         method: "GET",
         headers: headersList
       });

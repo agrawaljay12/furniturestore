@@ -18,7 +18,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!token) return;
 
     try {
-      const response = await axios.get("http://127.0.0.1:10007/api/v1/banned/list", {
+      const response = await axios.get("https://furnspace.onrender.com/api/v1/banned/list", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
