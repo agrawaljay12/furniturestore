@@ -28,7 +28,7 @@ const Notification: React.FC = () => {
 
   const fetchUserDetails = async (userId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`, {
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`, {
         method: "GET",
         headers: {
           "Accept": "*/*",
@@ -57,7 +57,7 @@ const Notification: React.FC = () => {
       }
 
       // First get all user activities to extract unique user IDs
-      const response = await axios.post("http://localhost:10007/api/v1/useractivity/list", {}, {
+      const response = await axios.post("https://furnspace.onrender.com/api/v1/useractivity/list", {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -71,7 +71,7 @@ const Notification: React.FC = () => {
       // Fetch user details for each unique user ID
       const usersPromises = uniqueUserIds.map(async (userId: string) => {
         try {
-          const response = await fetch(`http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`, {
+          const response = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`, {
             method: "GET",
             headers: {
               "Accept": "*/*",
@@ -119,7 +119,7 @@ const Notification: React.FC = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:10007/api/v1/useractivity/list", {}, {
+      const response = await axios.post("https://furnspace.onrender.com/api/v1/useractivity/list", {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

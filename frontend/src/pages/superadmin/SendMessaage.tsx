@@ -20,7 +20,7 @@ const SendMessage = () => {
 
   const fetchAdmins = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:10007/api/v1/auth/get_users", {
+      const response = await fetch("https://furnspace.onrender.com/api/v1/auth/get_users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -37,7 +37,7 @@ const SendMessage = () => {
         const adminsWithDetails = await Promise.all(
           adminsData.map(async (admin: any) => {
             try {
-              const detailsResponse = await fetch(`http://127.0.0.1:10007/api/v1/auth/user/fetch/${admin.id}`, {
+              const detailsResponse = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${admin.id}`, {
                 method: "GET",
                 headers: { "Accept": "*/*" }
               });
@@ -111,7 +111,7 @@ const SendMessage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://127.0.0.1:10007/api/v1/message/send_message", {
+      const response = await fetch("https://furnspace.onrender.com/api/v1/message/send_message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),

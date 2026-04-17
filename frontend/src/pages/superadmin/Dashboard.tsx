@@ -42,7 +42,7 @@ const SuperDashboard: React.FC = () => {
 
       const bodyContent = JSON.stringify({});
 
-      const response = await fetch("http://127.0.0.1:10007/api/v1/auth/get_users", {
+      const response = await fetch("https://furnspace.onrender.com/api/v1/auth/get_users", {
         method: "POST",
         body: bodyContent,
         headers: headersList
@@ -62,8 +62,8 @@ const SuperDashboard: React.FC = () => {
         "Content-Type": "application/json"
       };
 
-      const response = await fetch("http://localhost:10007/api/v1/warning/list", {
-        method: "GET",
+        const response = await fetch("https://furnspace.onrender.com/api/v1/warning/list", {
+          method: "GET",
         headers: headersList
       });
 
@@ -81,7 +81,7 @@ const SuperDashboard: React.FC = () => {
         "Content-Type": "application/json"
       };
 
-      const response = await fetch("http://127.0.0.1:10007/api/v1/banned/list", {
+      const response = await fetch("https://furnspace.onrender.com/api/v1/banned/list", {
         method: "GET",
         headers: headersList
       });
@@ -106,7 +106,7 @@ const SuperDashboard: React.FC = () => {
       };
 
 
-      const response = await fetch("http://127.0.0.1:10007/api/v1/furniture/list_all_furniture", { 
+      const response = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all_furniture", { 
         method: "GET",
         headers: headersList
       });

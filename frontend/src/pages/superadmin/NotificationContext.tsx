@@ -33,7 +33,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       if (!token) return;
 
       const response = await axios.post(
-        'http://localhost:10007/api/v1/useractivity/list', 
+        'https://furnspace.onrender.com/api/v1/useractivity/list', 
         {}, 
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -64,7 +64,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       // You could replace this with an API call that directly returns the count
       // For now, we'll fetch all notifications and calculate unread count
       const response = await axios.post(
-        'http://localhost:10007/api/v1/useractivity/list', 
+        'https://furnspace.onrender.com/api/v1/useractivity/list', 
         {}, 
         {
           headers: { Authorization: `Bearer ${token}` },

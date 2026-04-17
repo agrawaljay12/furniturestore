@@ -59,7 +59,7 @@ const ApprovedRejected: React.FC = () => {
       };
 
       const response = await axios.get(
-        "http://127.0.0.1:10007/api/v1/furniture/list_all_furniture",
+        "https://furnspace.onrender.com/api/v1/furniture/list_all_furniture",
         { headers: headersList }
       );
       
@@ -131,7 +131,7 @@ const ApprovedRejected: React.FC = () => {
       };
 
       const response = await axios.get(
-        `http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`,
+        `https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`,
         { headers: headersList }
       );
 

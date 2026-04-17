@@ -93,7 +93,7 @@ const guestdeals: React.FC = () => {
       try {
         // Fetch furniture with offers/discounts directly
         const response = await fetch(
-          "http://127.0.0.1:10007/api/v1/offer/list",
+          "https://furnspace.onrender.com/api/v1/offer/list",
           {
             method: "GET",
             headers: { "Content-Type": "application/json" },

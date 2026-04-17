@@ -27,7 +27,7 @@ const DeliveryDashboard: React.FC = () => {
           "Content-Type": "application/json"
         };
 
-        const response = await fetch("http://localhost:10007/api/v1/booking/get_booking", { 
+        const response = await fetch("https://furnspace.onrender.com/api/v1/booking/get_booking", { 
           method: "GET",
           headers: headersList
         });

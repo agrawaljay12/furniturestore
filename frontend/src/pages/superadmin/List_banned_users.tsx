@@ -14,7 +14,7 @@ const Banned_User: React.FC = () => {
 
   const fetchUsername = async (userId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`, {
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`, {
         method: "GET",
         headers: {
           "Accept": "*/*",
@@ -39,7 +39,7 @@ const Banned_User: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const response = await axios.get("http://127.0.0.1:10007/api/v1/banned/list", {
+      const response = await axios.get("https://furnspace.onrender.com/api/v1/banned/list", {
         headers: {
           Authorization: `Bearer ${token}`,
         },

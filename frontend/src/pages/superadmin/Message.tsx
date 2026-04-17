@@ -20,7 +20,7 @@ const ComeMessage: React.FC = () => {
     if (!userId || userDetails[userId]) return;
     
     try {
-      const response = await fetch(`http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`, {
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`, {
         method: "GET",
         headers: {
           "Accept": "*/*",
@@ -52,7 +52,7 @@ const ComeMessage: React.FC = () => {
     }
 
     try {
-      const response = await axios.get("http://127.0.0.1:10007/api/v1/message/get", {
+      const response = await axios.get("https://furnspace.onrender.com/api/v1/message/get", {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -108,7 +108,7 @@ const ComeMessage: React.FC = () => {
       
       const message = messages.find(msg => msg._id === messageId);
       if (message && message.sender_role === "admin") {
-        await axios.post(`http://127.0.0.1:10007/api/v1/message/delete/${messageId}`, {
+        await axios.post(`https://furnspace.onrender.com/api/v1/message/delete/${messageId}`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

@@ -36,7 +36,7 @@ const Password: React.FC = () => {
       });
 
       let response = await fetch(
-        `http://127.0.0.1:10007/api/v1/auth/change_password/${userid}`,
+        `https://furnspace.onrender.com/api/v1/auth/change_password/${userid}`,
         {
           method: "POST",
           body: bodyContent,

@@ -37,7 +37,7 @@ const Approved: React.FC = () => {
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
   // Add debounce timeout reference
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   
   // Add user data state
   const [userMap, setUserMap] = useState<{[key: string]: {firstName: string, lastName: string}}>({});
@@ -80,7 +80,7 @@ const Approved: React.FC = () => {
         "User-Agent": "Thunder Client (https://www.thunderclient.com)"
       };
 
-      const response = await fetch(`http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`, {
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`, {
         method: "GET",
         headers: headersList
       });
@@ -112,7 +112,7 @@ const Approved: React.FC = () => {
   
       const bodyContent = JSON.stringify({});
   
-      const response = await fetch("http://127.0.0.1:10007/api/v1/auth/get_users", { 
+      const response = await fetch("https://furnspace.onrender.com/api/v1/auth/get_users", { 
         method: "POST",
         body: bodyContent,
         headers: headersList
@@ -153,7 +153,7 @@ const Approved: React.FC = () => {
       };
 
       // Using the new API endpoint with GET method
-      const response = await fetch("http://127.0.0.1:10007/api/v1/furniture/list_all_furniture", {
+      const response = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all_furniture", {
         method: "GET",
         headers: headersList
       });

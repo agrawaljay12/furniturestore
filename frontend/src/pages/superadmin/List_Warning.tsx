@@ -20,7 +20,7 @@ const ListWarning: React.FC = () => {
     }
 
     try {
-      const response = await axios.get("http://localhost:10007/api/v1/warning/list", {
+      const response = await axios.get("https://furnspace.onrender.com/api/v1/warning/list", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -29,7 +29,7 @@ const ListWarning: React.FC = () => {
       console.log(response.data.data);
 
       // Fetch banned users to exclude them from warnings
-      const bannedResponse = await axios.get("http://127.0.0.1:10007/api/v1/banned/list", {
+      const bannedResponse = await axios.get("https://furnspace.onrender.com/api/v1/banned/list", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -79,7 +79,7 @@ const ListWarning: React.FC = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:10007/api/v1/banned/ban/temporary",
+        "https://furnspace.onrender.com/api/v1/banned/ban/temporary",
         {
           user_id: userId,
           email: email,
@@ -129,7 +129,7 @@ const ListWarning: React.FC = () => {
 
       // First apply permanent ban
       const response = await axios.post(
-        "http://localhost:10007/api/v1/banned/ban/permanent",
+        "https://furnspace.onrender.com/api/v1/banned/ban/permanent",
         {
           user_id: userId,
           email: email,
@@ -157,7 +157,7 @@ const ListWarning: React.FC = () => {
           
           const bodyContent = JSON.stringify({});
           
-          const deleteResponse = await fetch(`http://127.0.0.1:10007/api/v1/auth/delete_user/${userId}`, { 
+          const deleteResponse = await fetch(`https://furnspace.onrender.com/api/v1/auth/delete_user/${userId}`, { 
             method: "POST",
             body: bodyContent,
             headers: headersList

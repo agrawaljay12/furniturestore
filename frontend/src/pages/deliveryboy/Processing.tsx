@@ -44,7 +44,7 @@ const fetchSpecificFurnitureDetails = async (furnitureId: string) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
     
-    const response = await fetch(`http://127.0.0.1:10007/api/v1/furniture/${furnitureId}`, { 
+    const response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/${furnitureId}`, { 
       method: "GET",
       headers: headersList,
       signal: controller.signal
@@ -86,7 +86,7 @@ const fetchUserDetails = async (userId: string) => {
       "User-Agent": "Thunder Client (https://www.thunderclient.com)"
     };
     
-    const response = await fetch(`http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`, {
+    const response = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`, {
       method: "GET",
       headers: headersList
     });
@@ -134,7 +134,7 @@ const fetchFurnitureDetails = async (furnitureId: string) => {
     });
 
     console.log(`Fetching details for furniture ID: ${furnitureId}`);
-    const response = await fetch("http://127.0.0.1:10007/api/v1/furniture/list_all", { 
+    const response = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", { 
       method: "POST",
       body: bodyContent,
       headers: headersList
@@ -208,7 +208,7 @@ const fetchFurnitureDetails = async (furnitureId: string) => {
         "search": furnitureId
       });
       
-      const fallbackResponse = await fetch("http://127.0.0.1:10007/api/v1/furniture/list_all", { 
+      const fallbackResponse = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", { 
         method: "POST",
         body: fallbackBodyContent,
         headers: headersList
@@ -346,7 +346,7 @@ const Processing: React.FC = () => {
         "Content-Type": "application/json"
       };
 
-      const response = await fetch("http://localhost:10007/api/v1/booking/get_booking", { 
+      const response = await fetch("https://furnspace.onrender.com/api/v1/booking/get_booking", { 
         method: "GET",
         headers: headersList
       });
@@ -483,7 +483,7 @@ const Processing: React.FC = () => {
       console.log(`Updating booking ${bookingId} to status: ${status}`);
       console.log("Request payload:", bodyContent);
       
-      const response = await fetch(`http://localhost:10007/api/v1/booking/update_status/${bookingId}`, { 
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/booking/update_status/${bookingId}`, { 
         method: "POST",
         body: bodyContent,
         headers: headersList

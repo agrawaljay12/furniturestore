@@ -35,7 +35,7 @@ const AddWarning = () => {
   const fetchUserEmail = async (uid: string) => {
     setLoading(true);
     try {
-      const response = await fetch("http://127.0.0.1:10007/api/v1/auth/get_users", {
+      const response = await fetch("https://furnspace.onrender.com/api/v1/auth/get_users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -80,7 +80,7 @@ const AddWarning = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:10007/api/v1/warning/add", {
+      const response = await fetch("https://furnspace.onrender.com/api/v1/warning/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
