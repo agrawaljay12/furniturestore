@@ -35,7 +35,7 @@ class FileUpload:
             with open(file_path, "wb") as buffer:
                 buffer.write(file.file.read())
 
-            return "https://furnspace.onrender.com/static/uploads/{unique_filename}"
+            return f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
 
         except Exception as e:
             raise ValueError(f"Error saving file: {str(e)}")
