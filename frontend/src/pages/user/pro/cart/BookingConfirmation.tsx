@@ -394,7 +394,7 @@ const BookingConfirmation: React.FC = () => {
       try {
         // Send to API with better error handling
         console.log(`Sending receipt to email: ${email}`);
-        const response = await fetch('http://localhost:10007/api/v1/mail/send-receipt', {
+        const response = await fetch('https://furnspace.onrender.com/api/v1/mail/send-receipt', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

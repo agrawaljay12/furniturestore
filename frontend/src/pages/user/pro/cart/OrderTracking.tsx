@@ -367,7 +367,7 @@ const OrderTrackingPage: React.FC = () => {
   const getImageUrl = (imagePath: string | undefined, paymentId?: string): string => {
     if (!imagePath) {
       if (paymentId) {
-        return `http://localhost:10007/api/v1/payments/${paymentId}/receipt`;
+        return `https://furnspace.onrender.com/api/v1/payments/${paymentId}/receipt`;
       }
       return "https://placehold.co/300x200/e0e0e0/808080?text=No+Image";
     }
@@ -392,7 +392,7 @@ const OrderTrackingPage: React.FC = () => {
     setErrorCode(null);
 
     try {
-      const response = await fetch(`http://localhost:10007/api/v1/booking/get_with_furniture/${id}`);
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/booking/get_with_furniture/${id}`);
       
       if (!response.ok) {
         setErrorCode(response.status);
@@ -409,7 +409,7 @@ const OrderTrackingPage: React.FC = () => {
       
       if (data.data && data.data.user_id && (!data.data.user_name || !data.data.user_phone)) {
         try {
-          const userResponse = await fetch(`http://localhost:10007/api/v1/user/${data.data.user_id}`);
+          const userResponse = await fetch(`https://furnspace.onrender.com/api/v1/user/${data.data.user_id}`);
           if (userResponse.ok) {
             const userData = await userResponse.json();
             if (userData && userData.data) {
@@ -417,7 +417,7 @@ const OrderTrackingPage: React.FC = () => {
               data.data.user_phone = userData.data.phone || userData.data.phoneNumber || userData.data.contact;
             }
           } else {
-            const profileResponse = await fetch(`http://localhost:10007/api/v1/auth/profile/${data.data.user_id}`);
+            const profileResponse = await fetch(`https://furnspace.onrender.com/api/v1/auth/profile/${data.data.user_id}`);
             if (profileResponse.ok) {
               const profileData = await profileResponse.json();
               if (profileData && profileData.data) {
@@ -446,7 +446,7 @@ const OrderTrackingPage: React.FC = () => {
           }
           
           if ((!furniture.images || furniture.images.length === 0) && furniture._id) {
-            const directImageUrl = `http://localhost:10007/api/v1/furniture/${furniture._id}/image`;
+            const directImageUrl = `https://furnspace.onrender.com/api/v1/furniture/${furniture._id}/image`;
             furniture.images = [directImageUrl];
             furniture.image = directImageUrl;
           }
@@ -467,17 +467,17 @@ const OrderTrackingPage: React.FC = () => {
       
       if (data.data && data.data.payment_id) {
         try {
-          const paymentResponse = await fetch(`http://localhost:10007/api/v1/payments/${data.data.payment_id}`);
+          const paymentResponse = await fetch(`https://furnspace.onrender.com/api/v1/payments/${data.data.payment_id}`);
           if (paymentResponse.ok) {
             const paymentData = await paymentResponse.json();
             if (paymentData && paymentData.data) {
               data.data.payment_image = paymentData.data.receipt_image || paymentData.data.image;
             }
           } else {
-            data.data.payment_image = `http://localhost:10007/api/v1/payments/${data.data.payment_id}/receipt`;
+            data.data.payment_image = `https://furnspace.onrender.com/api/v1/payments/${data.data.payment_id}/receipt`;
           }
         } catch (paymentError) {
-          data.data.payment_image = `http://localhost:10007/api/v1/payments/${data.data.payment_id}/receipt`;
+          data.data.payment_image = `https://furnspace.onrender.com/api/v1/payments/${data.data.payment_id}/receipt`;
         }
       }
       
@@ -680,7 +680,7 @@ const OrderTrackingPage: React.FC = () => {
                           if (furniture.images && furniture.images.length > 1) {
                             e.currentTarget.src = getImageUrl(furniture.images[1]);
                           } else if (furniture._id) {
-                            e.currentTarget.src = `http://localhost:10007/api/v1/furniture/${furniture._id}/image`;
+                            e.currentTarget.src = `https://furnspace.onrender.com/api/v1/furniture/${furniture._id}/image`;
                           } else {
                             e.currentTarget.src = "https://placehold.co/300x200/e0e0e0/808080?text=No+Image";
                           }

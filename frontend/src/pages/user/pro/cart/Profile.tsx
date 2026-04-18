@@ -49,7 +49,7 @@ const Profile: React.FC = () => {
       }
 
       const response = await axios.get(
-        `http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`
+        `https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`
       );
 
       if (response.data && response.data.data) {

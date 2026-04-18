@@ -67,7 +67,7 @@ const getProductImage = (furniture: FurnitureDetail): string => {
   }
   
   // Otherwise, assume it's a relative path and prefix with server URL
-  return `http://localhost:10007${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+  return `https://furnspace.onrender.com${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
 };
 
 const PaymentHistoryPage: React.FC = () => {
@@ -93,7 +93,7 @@ const PaymentHistoryPage: React.FC = () => {
       }
 
       try {
-        const response = await fetch(`http://localhost:10007/api/v1/booking/user/${userId}`);
+        const response = await fetch(`https://furnspace.onrender.com/api/v1/booking/user/${userId}`);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }

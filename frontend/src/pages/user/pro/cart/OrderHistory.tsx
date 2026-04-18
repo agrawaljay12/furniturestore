@@ -44,7 +44,7 @@ const getImageUrl = (imagePath: string | undefined, paymentId?: string): string 
   if (!imagePath) {
     // If we have a payment ID, we can try to get an image related to the payment
     if (paymentId) {
-      return `http://localhost:10007/api/v1/payments/${paymentId}/receipt`;
+      return `https://furnspace.onrender.com/api/v1/payments/${paymentId}/receipt`;
     }
     return "https://placehold.co/100x100/e0e0e0/808080?text=No+Image";
   }
@@ -58,7 +58,7 @@ const getImageUrl = (imagePath: string | undefined, paymentId?: string): string 
   const formattedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
   
   // Return the complete URL
-  return `http://localhost:10007${formattedPath}`;
+  return `https://furnspace.onrender.com${formattedPath}`;
 };
 
 const OrderHistory: React.FC = () => {
@@ -117,7 +117,7 @@ const OrderHistory: React.FC = () => {
         let bookingData;
         try {
           console.log("Fetching bookings for user:", userId);
-          const bookingResponse = await fetch(`http://localhost:10007/api/v1/booking/user/${userId}`);
+          const bookingResponse = await fetch(`https://furnspace.onrender.com/api/v1/booking/user/${userId}`);
           bookingData = await bookingResponse.json();
           
           console.log("API Response:", bookingData);
@@ -320,7 +320,7 @@ const OrderHistory: React.FC = () => {
 
       // Update the API endpoint to match the one in root.py
       const response = await axios.post(
-        "http://localhost:10007/api/v1/review/add",
+        "https://furnspace.onrender.com/api/v1/review/add",
         reviewData
       );
 

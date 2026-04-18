@@ -215,7 +215,7 @@ const PaymentPage: React.FC = () => {
           payment_method: "paypal"
         }]
       };
-      const response = await fetch("http://localhost:10007/api/v1/booking/create", {
+      const response = await fetch("https://furnspace.onrender.com/api/v1/booking/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

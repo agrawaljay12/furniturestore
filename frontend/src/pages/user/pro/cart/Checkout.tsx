@@ -81,7 +81,7 @@ const CheckoutPage: React.FC = () => {
   // Fetch user details from the backend
   const fetchUserDetails = async (userId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`, {
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -314,7 +314,7 @@ const CheckoutPage: React.FC = () => {
 
       console.log("Fetching addresses for user:", userId);
 
-      const response = await fetch(`http://localhost:10007/api/v1/address/get_address/${userId}`, { 
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/address/get_address/${userId}`, { 
         method: "GET", 
         headers: headersList 
       });
