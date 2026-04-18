@@ -35,7 +35,7 @@ export const RetailerProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const response = await axios.get(
-          `http://127.0.0.1:10007/api/v1/auth/user/fetch/${token}`
+          `https://furnspace.onrender.com/api/v1/auth/user/fetch/${token}`
         );
 
         if (response.data && response.data.data) {

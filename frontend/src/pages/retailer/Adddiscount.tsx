@@ -43,7 +43,7 @@ const AddDiscountPage = () => {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://127.0.0.1:10007/api/v1/offer/add', {
+      const response = await fetch('https://furnspace.onrender.com/api/v1/offer/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -70,7 +70,7 @@ function ListFurniture(): React.ReactElement {
 
       let userid = localStorage.getItem('token');  
       const response = await fetch(
-        `http://127.0.0.1:10007/api/v1/furniture/list/${userid}`,
+        `https://furnspace.onrender.com/api/v1/furniture/list/${userid}`,
         {
           method: "GET",
           headers: headersList
@@ -105,7 +105,7 @@ function ListFurniture(): React.ReactElement {
         "Accept": "*/*"
       };
       
-      const response = await fetch(`http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`, { 
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`, { 
         method: "GET",
         headers: headersList
       });
@@ -143,7 +143,7 @@ function ListFurniture(): React.ReactElement {
       };
       
       // Updated API endpoint to include furniture ID as a query parameter
-      const response = await fetch(`http://localhost:10007/api/v1/review/get/${furnitureId}`, { 
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/review/get/${furnitureId}`, { 
         method: "GET",
         headers: headersList
       });
@@ -227,7 +227,7 @@ function ListFurniture(): React.ReactElement {
     
     setError("Updating furniture...");
 
-    const url = `http://127.0.0.1:10007/api/v1/furniture/update-furniture`;
+    const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
     const formDataToSend = new FormData();
     
     // Determine current image type
@@ -397,7 +397,7 @@ function ListFurniture(): React.ReactElement {
     const bodyContent = JSON.stringify({});
 
     try {
-        const response = await fetch(`http://127.0.0.1:10007/api/v1/furniture/delete/${furnitureId}`, {
+        const response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/delete/${furnitureId}`, {
             method: "POST",
             body: bodyContent,
             headers: headersList

@@ -77,7 +77,7 @@ const RetailerDashboard: React.FC = () => {
       console.log(`Fetching furniture for user ID: ${userId}`);
       
       // Use the working endpoint directly to avoid unnecessary API calls
-      let response = await fetch(`http://127.0.0.1:10007/api/v1/furniture/list_all_furniture`, { 
+      let response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/list_all_furniture`, { 
         method: "GET",
         headers: headersList
       });
@@ -131,7 +131,7 @@ const RetailerDashboard: React.FC = () => {
       let headersList = {
         "Content-Type": "application/json"
       };
-      let response = await fetch(`http://127.0.0.1:10007/api/v1/booking/seller_revenue/${userId}?period=${selectedPeriod}`, { 
+      let response = await fetch(`https://furnspace.onrender.com/api/v1/booking/seller_revenue/${userId}?period=${selectedPeriod}`, { 
         method: "GET",
         headers: headersList
       });
