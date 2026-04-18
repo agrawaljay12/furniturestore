@@ -108,7 +108,7 @@ const Profile: React.FC = () => {
       return;
     }
 
-    const url = `http://127.0.0.1:10007/api/v1/auth/user/${user_id}/update`;
+    const url = `https://furnspace.onrender.com/api/v1/auth/user/${user_id}/update`;
 
     const formDataToSend = new FormData();
     formDataToSend.append("document", JSON.stringify(formData));
