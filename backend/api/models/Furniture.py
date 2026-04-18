@@ -43,7 +43,7 @@ class Furniture(BaseModel):
             images = []
             for file in files:
                 unique_filename = file_upload.save_file(file)
-                file_url = f" https://furnspace.onrender.com/files/{unique_filename}"
+                file_url = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
                 images.append(file_url)
 
             images = [img for img in images if img]
