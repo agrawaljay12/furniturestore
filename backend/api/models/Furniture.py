@@ -43,7 +43,7 @@ class Furniture(BaseModel):
             images = []
             for file in files:
                 unique_filename = file_upload.save_file(file)
-                file_url = f"http://localhost:10007/files/{unique_filename}"
+                file_url = f" https://furnspace.onrender.com/files/{unique_filename}"
                 images.append(file_url)
 
             images = [img for img in images if img]
@@ -108,7 +108,7 @@ class Furniture(BaseModel):
                 for file in files:
                     if file.filename:  # Only process files that have a filename
                         unique_filename = file_upload.save_file(file)
-                        file_url = f"http://localhost:10007/files/{unique_filename}"
+                        file_url = f" https://furnspace.onrender.com/files/{unique_filename}"
                         new_images.append(file_url)
                         print(f"Processed new image: {file_url}")
             

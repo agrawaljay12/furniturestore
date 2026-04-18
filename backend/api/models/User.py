@@ -43,7 +43,7 @@ class User(BaseModel):
             if file:
                 file_upload = FileUpload()
                 unique_filename = file_upload.save_file(file)
-                file_url = f"http://localhost:10007/files/{unique_filename}"
+                file_url = f" https://furnspace.onrender.com/files/{unique_filename}"
                 user_data['profile_picture'] = file_url
                 
             if users_collection.find_one({'email': user_data['email']}):
@@ -159,7 +159,7 @@ class User(BaseModel):
 
                 # Save the file and get the unique filename
                 unique_filename = file_upload.save_file(file)
-                file_url = f"http://localhost:10007/files/{unique_filename}"
+                file_url = f"https://furnspace.onrender.com/files/{unique_filename}"
                 update_data['profile_picture'] = file_url
                 print("Profile New : ", update_data['profile_picture'])
 
