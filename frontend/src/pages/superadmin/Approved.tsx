@@ -463,7 +463,7 @@ const Approved: React.FC = () => {
       console.log(`Sending status update for furniture ${furnitureId}, setting status to ${status}`);
       
       // Make the API request to update the status
-      const response = await fetch(`http://127.0.0.1:10007/api/v1/furniture/status/user/${userId}/furniture/${furnitureId}`, {
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/status/user/${userId}/furniture/${furnitureId}`, {
         method: "POST",
         body: bodyContent,
         headers: headersList
@@ -480,7 +480,7 @@ const Approved: React.FC = () => {
             console.log(`Attempting to delete rejected furniture item ${furnitureId} from database`);
             
             // Make the API request to delete the furniture item
-            const deleteResponse = await fetch(`http://127.0.0.1:10007/api/v1/furniture/delete/${furnitureId}`, {
+            const deleteResponse = await fetch(`https://furnspace.onrender.com/api/v1/furniture/delete/${furnitureId}`, {
               method: "post",
               headers: headersList
             });
