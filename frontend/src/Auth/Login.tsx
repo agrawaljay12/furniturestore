@@ -51,7 +51,7 @@ const Login: React.FC = () => {
     setErrors(newErrors);
     if (Object.keys(newErrors).length === 0) {
       try {
-        const banResponse = await fetch('http://127.0.0.1:10007/api/v1/banned/login', {
+        const banResponse = await fetch('https://furnspace.onrender.com/api/v1/banned/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email }),
@@ -63,7 +63,7 @@ const Login: React.FC = () => {
           return;
         }
 
-        const response = await fetch('http://127.0.0.1:10007/api/v1/auth/user/login', {
+        const response = await fetch('https://furnspace.onrender.com/api/v1/auth/user/login', {
           method: 'POST',
           headers: {
             'Accept': '*/*',
@@ -114,7 +114,7 @@ const Login: React.FC = () => {
             logUserActivity(`Failed login attempt (${newFailedAttempts}) for user: ${email}`);
             
             try {
-              await fetch('http://127.0.0.1:10007/api/v1/activity/log', {
+              await fetch('https://furnspace.onrender.com/api/v1/activity/log', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',

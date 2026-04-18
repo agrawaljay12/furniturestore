@@ -30,7 +30,7 @@ const ForgotPassword: React.FC = () => {
 
     // Send OTP request to backend
     try {
-      let response = await fetch("http://localhost:10007/api/v1/mail/send-otp", {
+      let response = await fetch("https://furnspace.onrender.com/api/v1/mail/send-otp", {
         method: "POST",
         headers: {
           "Accept": "*/*",
@@ -61,7 +61,7 @@ const ForgotPassword: React.FC = () => {
 
     // Verify OTP
     try {
-      let response = await fetch("http://localhost:10007/api/v1/mail/verify-otp", {
+      let response = await fetch("https://furnspace.onrender.com/api/v1/mail/verify-otp", {
         method: "POST",
         headers: {
           "Accept": "*/*",
@@ -98,7 +98,7 @@ const ForgotPassword: React.FC = () => {
     if (Object.keys(newErrors).length === 0) {
       // Send request to reset the password
       try {
-        let response = await fetch("http://127.0.0.1:10007/api/v1/auth/user/change-password", {
+        let response = await fetch("https://furnspace.onrender.com/api/v1/auth/user/change-password", {
           method: "POST",
           headers: {
             "Accept": "*/*",

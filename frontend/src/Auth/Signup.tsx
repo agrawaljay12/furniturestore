@@ -96,7 +96,7 @@ const Signup: React.FC = () => {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:10007/api/v1/auth/user/create", {
+      const response = await fetch("https://furnspace.onrender.com/api/v1/auth/user/create", {
         method: "POST",
         body: bodyContent,
       });
