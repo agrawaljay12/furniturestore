@@ -3,14 +3,13 @@ import certifi
 from pymongo import MongoClient
 
 
-MONGO_URI = os.getenv("MONGO_URL")
+MONGO_URI = os.getenv("MONGO_URI")
 
 # Initialize MongoDB connection
 client = MongoClient(
     MONGO_URI,
     tls=True,
-    tlsCAFile=certifi.where(),
-    serverSelectionTimeoutMS=5000
+    tlsCAFile=certifi.where()
 )
 
 db = client["furniture"]
