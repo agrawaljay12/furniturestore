@@ -78,22 +78,22 @@ const Signup: React.FC = () => {
   const submitSignup = async () => {
      
     const bodyContent = new FormData();
-    bodyContent.append('user_data', JSON.stringify({
-      first_name: formData.first_name,
-      last_name: formData.last_name,
-      email: formData.email,
-      password: formData.password,
-      phone: formData.phone,
-      phone2: formData.phone2,
-      address: formData.address,
-      pin_code: formData.pin_code,
-      state: formData.state,
-      city: formData.city,
-      country: formData.country,
-      type: formData.type,
-    }));
+
+    bodyContent.append("first_name", formData.first_name);
+    bodyContent.append("last_name", formData.last_name);
+    bodyContent.append("email", formData.email);
+    bodyContent.append("password", formData.password);
+    bodyContent.append("phone", formData.phone);
+    bodyContent.append("phone2", formData.phone2 || "");
+    bodyContent.append("address", formData.address);
+    bodyContent.append("pin_code", formData.pin_code);
+    bodyContent.append("state", formData.state);
+    bodyContent.append("city", formData.city);
+    bodyContent.append("country", formData.country);
+    bodyContent.append("type", formData.type);
+
     if (formData.profile_picture) {
-      bodyContent.append("file",formData.profile_picture);
+      bodyContent.append("file", formData.profile_picture);
     }
 
 
