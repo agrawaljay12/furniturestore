@@ -33,8 +33,8 @@ async def hello_world():
 # Default Port : 10007
 @router.post("/user/create", response_description="Add New User")
 async def create_user(
-    firstname: str = Form(...),
-    lastname: str = Form(...),
+    first_name: str = Form(...),
+    last_name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
     phone: str = Form(...),
@@ -51,12 +51,12 @@ async def create_user(
     try:
         pattern=r'^[a-zA-Z]+$'
         # return data
-        if not re.match(pattern,firstname):
+        if not re.match(pattern,first_name):
             raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="First name must contain only letters."
         )
-        if not re.match(pattern,lastname):
+        if not re.match(pattern,last_name):
             raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Last name must contain only letters ."
@@ -94,8 +94,8 @@ async def create_user(
             detail="City must contain only letters and spaces."
         )
         user_data = {
-            "first_name": firstname,
-            "last_name": lastname,
+            "first_name": first_name,
+            "last_name": last_name,
             "email": email,
             "password": password,
             "phone": phone,
