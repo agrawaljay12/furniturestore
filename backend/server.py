@@ -1,20 +1,29 @@
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from bind import sio_app
 import os
+from pathlib import Path
 
 
 app = FastAPI()
 
 # if uploads folder doesn't exist, create it
-if not os.path.exists('static/uploads'):
-    os.makedirs('static/uploads')
 
-# Mount the static files
-app.mount("/static", StaticFiles(directory='static'), name="static")
-app.mount("/files", StaticFiles(directory='static/uploads'), name="files")
+BASE_DIR = Path(__file__).resolve().parent.parent
+static_dir = BASE_DIR / "static"
+uploads_dir = static_dir / "uploads"
+
+if not os.path.exists(uploads_dir):
+        os.makedirs(uploads_dir)
+
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+if uploads_dir.exists():
+    app.mount("/files", StaticFiles(directory=uploads_dir), name="files")
+
 app.mount('/', app=sio_app)
 
 app.add_middleware(
