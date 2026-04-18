@@ -1,16 +1,13 @@
 import os
 import certifi
 from pymongo import MongoClient
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
 
-MONGO_URL = os.getenv("MONGO_URL")
+MONGO_URI = os.getenv("MONGO_URL")
 
 # Initialize MongoDB connection
 client = MongoClient(
-    MONGO_URL,
+    MONGO_URI,
     tls=True,
     tlsCAFile=certifi.where(),
     serverSelectionTimeoutMS=5000
