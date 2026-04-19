@@ -5,7 +5,7 @@ from api.db import users_collection
 from bson.objectid import ObjectId
 from typing import List, Optional
 import re
-from api.models.FileUpload import save_file
+from api.models.FileUpload import FileUpload
 
 
 class User(BaseModel):
@@ -37,11 +37,12 @@ class User(BaseModel):
 #     country: str
 
     @staticmethod
-    async def add_user(user_data: dict,file: Optional[UploadFile] = None )-> bool:
+    def add_user(user_data: dict,file: Optional[UploadFile] = None )-> bool:
         """ Adds a new user to the collection. """
         try:
             if file:
-                file_path = await save_file(file)
+                file_upload = FileUpload()
+                file_path = file_upload.save_file(file)
                 # file_url = f" https://furnspace.onrender.com/files/{unique_filename}"
                 user_data['profile_picture'] = file_path
                 return file_path
