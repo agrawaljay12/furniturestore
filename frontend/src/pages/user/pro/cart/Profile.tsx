@@ -123,7 +123,7 @@ const Profile: React.FC = () => {
           "Content-Type": "multipart/form-data"
         }
       });
-      fetchUserDetails(); // Fetch the updated user data
+      // fetchUserDetails(); // Fetch the updated user data
       setUser(response.data.data); // Update the user data
       setProfilePicUrl(response.data.data.profile_picture);
       setPreviewPicUrl(undefined);
@@ -177,13 +177,13 @@ const Profile: React.FC = () => {
 
   const getImageUrl = (path?: string) => {
     if (!path) return "https://via.placeholder.com/150";
-
-    // Already full URL
     if (path.startsWith("http")) return path;
-
-    // Convert relative → absolute
     return `https://furnspace.onrender.com${path}`;
   };
+
+const imageSrc =
+  previewPicUrl ||
+  getImageUrl(profilePicUrl || user?.profile_picture);
 
   useEffect(() => {
     console.log("USER:", user);
@@ -263,11 +263,8 @@ const Profile: React.FC = () => {
                     className="relative mb-4"
                   >
                     <img
-                      src={
-                        previewPicUrl
-                          ? previewPicUrl
-                          : getImageUrl(profilePicUrl || user?.profile_picture)
-                      }
+                      src={imageSrc}
+                      alt="Profile"
                       className="w-36 h-36 rounded-full object-cover border-4 border-blue-200 shadow-md cursor-pointer"
                       onClick={handleProfilePicClick}
                     />
