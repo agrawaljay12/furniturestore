@@ -245,7 +245,7 @@ const Profile: React.FC = () => {
                     className="relative mb-4"
                   >
                     <img
-                      src={previewPicUrl || profilePicUrl || "https://via.placeholder.com/150"}
+                      src={user.profile_picture || previewPicUrl || profilePicUrl || "https://via.placeholder.com/150"}
                       alt="Profile"
                       className="w-36 h-36 rounded-full object-cover border-4 border-blue-200 shadow-md cursor-pointer transition-all duration-300"
                       onClick={handleProfilePicClick}
