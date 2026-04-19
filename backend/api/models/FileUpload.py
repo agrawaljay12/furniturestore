@@ -15,7 +15,8 @@ class FileUpload:
 
     upload_dir ="static/uploads"
 
-    def save_file(self, file: UploadFile) -> str:
+    @staticmethod
+    def save_file(file: UploadFile) -> str:
         try:
             if not file or not file.filename:
                 raise ValueError("No file provided")
@@ -25,9 +26,6 @@ class FileUpload:
             unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
 
             file_path = os.path.join(FileUpload.upload_dir, unique_filename)
-
-             # Ensure directory exists
-            os.makedirs(self.upload_dir, exist_ok=True)
             
             # Save file
             with open(file_path, "wb") as buffer:
