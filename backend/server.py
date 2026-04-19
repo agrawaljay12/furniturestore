@@ -13,10 +13,10 @@ app = FastAPI()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 static_dir = BASE_DIR / "static"
-# uploads_dir = static_dir / "uploads"
+uploads_dir = static_dir / "uploads"
 
-# if not os.path.exists(uploads_dir):
-#         os.makedirs(uploads_dir)
+if not os.path.exists(uploads_dir):
+        os.makedirs(uploads_dir)
 
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
