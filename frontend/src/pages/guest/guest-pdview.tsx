@@ -106,7 +106,7 @@ const GuestProductView: React.FC = () => {
       const fetchProduct = async () => {
         try {
           const response = await fetch(
-            `http://127.0.0.1:10007/api/v1/furniture/get/${productId}?is_for_sale=true&is_for_rent=true`
+            `https://furnspace.onrender.com/api/v1/furniture/get/${productId}?is_for_sale=true&is_for_rent=true`
           );
           if (!response.ok) throw new Error("Failed to fetch product details");
 
@@ -147,7 +147,7 @@ const GuestProductView: React.FC = () => {
             "title": ""
           });
           
-          let response = await fetch("http://127.0.0.1:10007/api/v1/furniture/list_all", { 
+          let response = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", { 
             method: "POST",
             body: bodyContent,
             headers: headersList
@@ -190,7 +190,7 @@ const GuestProductView: React.FC = () => {
                 "title": ""
               });
               
-              let broadResponse = await fetch("http://127.0.0.1:10007/api/v1/furniture/list_all", { 
+              let broadResponse = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", { 
                 method: "POST",
                 body: broadSearchBody,
                 headers: headersList
@@ -261,7 +261,7 @@ const GuestProductView: React.FC = () => {
       };
 
       console.log(`Fetching reviews for product ID: ${productId}`);
-      let response = await fetch(`http://localhost:10007/api/v1/review/get/${productId}`, { 
+      let response = await fetch(`https://furnspace.onrender.com/api/v1/review/get/${productId}`, { 
         method: "GET",
         headers: headersList
       });
@@ -335,7 +335,7 @@ const GuestProductView: React.FC = () => {
         
         try {
           console.log(`Fetching user data for ID: ${userId}`);
-          let response = await fetch(`http://127.0.0.1:10007/api/v1/auth/user/fetch/${userId}`, { 
+          let response = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${userId}`, { 
             method: "GET",
             headers: headersList
           });

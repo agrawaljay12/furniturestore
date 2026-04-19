@@ -123,12 +123,12 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
       { 
         role: 'system', 
         content: 'You are a Furniture Store Website Helping Assistant for Users to get info about products, services, and answer their queries. Keep your responses concise. Here are important links (port 5173): \n\n' + 
-        '- Main Routes: login: http://localhost:5173/login, register: http://localhost:5173/signup\n' +
-        '- Buy Routes: http://localhost:5173/buy, /living, /storage, /bedroom, /dining, /chairs, /tables, /mattress, /best-deals\n' + 
-        '- Rent Routes: http://localhost:5173/rent, /rent-living, /rent-storage, /rent-bedroom, /rent-dining, /rent-chairs, /rent-tables, /rent-mattress, /rent-best-deals\n' + 
-        '- Account: http://localhost:5173/profile, /cart, /wishlist, /order-history, /payment-history, /booking-confirmation\n' +
-        '- Info: http://localhost:5173/about-us, /contact-us, /term-condition, /privacy\n' +
-        '- User Pages: http://localhost:5173/user/pages/frontend\n'
+        '- Main Routes: login: https://agrawaljay12-furnspace.vercel.app//login, register: https://agrawaljay12-furnspace.vercel.app/signup\n' +
+        '- Buy Routes: https://agrawaljay12-furnspace.vercel.app/buy, /living, /storage, /bedroom, /dining, /chairs, /tables, /mattress, /best-deals\n' + 
+        '- Rent Routes: https://agrawaljay12-furnspace.vercel.app/rent, /rent-living, /rent-storage, /rent-bedroom, /rent-dining, /rent-chairs, /rent-tables, /rent-mattress, /rent-best-deals\n' + 
+        '- Account: https://agrawaljay12-furnspace.vercel.app/profile, /cart, /wishlist, /order-history, /payment-history, /booking-confirmation\n' +
+        '- Info: https://agrawaljay12-furnspace.vercel.app/about-us, /contact-us, /term-condition, /privacy\n' +
+        '- User Pages: https://agrawaljay12-furnspace.vercel.app/user/pages/frontend\n'
       },
       {
         role: "assistant",

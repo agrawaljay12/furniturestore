@@ -29,7 +29,7 @@ const HomePage: React.FC = () => {
 
     const fetchFurnitureItems = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:10007/api/v1/furniture/list_all");
+        const response = await axios.get("https://furnspace.onrender.com/api/v1/furniture/list_all");
         setFurnitureItems(response.data);
       } catch (error) {
         console.error("Error fetching furniture items:", error);
