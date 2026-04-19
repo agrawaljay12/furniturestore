@@ -5,24 +5,22 @@ from fastapi import UploadFile
 from werkzeug.utils import secure_filename
 from pydantic import BaseModel
 
-class FileUpload:
-    def __init__(self):
-        BASE_DIR = Path(__file__).resolve().parent.parent
-        self.upload_folder = BASE_DIR / "static" / "uploads"
+upload_dir: str = "static/uploads"
 
-        # Ensure folder exists
-        self.upload_folder.mkdir(parents=True, exist_ok=True)
+async def save_file(file: UploadFile):
 
-    def save_file(self, file):
-        if not file or not file.filename:
-            raise ValueError("No file provided")
+    # Extract the file extension
+    file_extension = file.filename.split(".")[-1]
 
-        filename = secure_filename(file.filename)
-        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+    # Generate a unique filename using uuid4 and preserve the original file extension
+    unique_filename = f"{uuid.uuid4()}.{file_extension}"
 
-        file_path = self.upload_folder / unique_filename
+    file_path = os.path.join(upload_dir, unique_filename)
+    
+    with open(file_path, "wb") as buffer:
+        content = await file.read()  # Read the file content asynchronously
+        buffer.write(content)         # Write the content to the file
 
-        with open(file_path, "wb") as buffer:
-            buffer.write(file.file.read())
-
-        return f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
+    # save the path of the saved file to the specified folder   
+    file_location = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
+    return file_location
