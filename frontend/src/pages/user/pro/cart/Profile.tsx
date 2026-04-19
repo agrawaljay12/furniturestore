@@ -172,14 +172,14 @@ const Profile: React.FC = () => {
     fileInputRef.current?.click();
   }
 
-  const getImageUrl = (path?: string) => {
-  if (!path) return "https://via.placeholder.com/150";
+//   const getImageUrl = (path?: string) => {
+//   if (!path) return "https://via.placeholder.com/150";
 
-  // if already full URL
-  if (path.startsWith("http")) return path;
+//   // if already full URL
+//   if (path.startsWith("http")) return path;
 
-  return `https://furnspace.onrender.com${path}`;
-};
+//   return `https://furnspace.onrender.com${path}`;
+// };
 
   // Skeleton loader component
   const SkeletonLoader = () => (
@@ -255,9 +255,7 @@ const Profile: React.FC = () => {
                   >
                     <img
                      src={
-                        previewPicUrl
-                          ? previewPicUrl
-                          : getImageUrl(user.profile_picture || profilePicUrl)
+                      user.profile_picture?user.profile_picture:previewPicUrl || profilePicUrl || "https://via.placeholder.com/150" 
                       }
                       className="w-36 h-36 rounded-full object-cover border-4 border-blue-200 shadow-md cursor-pointer transition-all duration-300"
                       onClick={handleProfilePicClick}

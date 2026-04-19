@@ -25,5 +25,4 @@ class FileUpload:
         with open(file_path, "wb") as buffer:
             buffer.write(file.file.read())
 
-        # ✅ RETURN ONLY PATH (NOT FULL URL)
-        return f"/static/uploads/{unique_filename}"
+        return f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
