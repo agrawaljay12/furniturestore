@@ -48,7 +48,8 @@ class User(BaseModel):
                 # file_url = f" https://furnspace.onrender.com/files/{unique_filename}"
                 user_data['profile_picture'] = file_url
 
-                return file_url
+            else:
+                user_data['profile_picture'] = "http://localhost:10007/files/default.png"
                 
             if users_collection.find_one({'email': user_data['email']}):
                 raise HTTPException(

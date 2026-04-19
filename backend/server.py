@@ -16,7 +16,7 @@ static_dir = BASE_DIR / "static"
 uploads_dir = static_dir / "uploads"
 
 if not os.path.exists(uploads_dir):
-        os.makedirs(uploads_dir)
+        os.makedirs(uploads_dir, exist_ok=True)
 
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
