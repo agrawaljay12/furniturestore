@@ -1,8 +1,8 @@
+from fileinput import filename
 import os
 from pathlib import Path
 import uuid
 from fastapi import UploadFile
-from werkzeug.utils import secure_filename
 from pydantic import BaseModel
 
 # Pydantic model for file metadata
@@ -12,25 +12,20 @@ class Image(BaseModel):
     filepath: str
     
 class FileUpload:
-    def __init__(self):
-        # ✅ Always point to static/uploads (NO subfolders)
-        BASE_DIR = Path(__file__).resolve().parent.parent
-        self.upload_folder = BASE_DIR / "static" / "uploads"
 
-        # ✅ Ensure directory exists
-        self.upload_folder.mkdir(parents=True, exist_ok=True)
+    upload_dir ="static/uploads"
 
-    def save_file(self, file):
+    def save_file(file: UploadFile) -> str:
         try:
             if not file or not file.filename:
                 raise ValueError("No file provided")
 
-            # ✅ Secure + unique filename
-            filename = secure_filename(file.filename)
-            unique_filename = f"{uuid.uuid4().hex}_{filename}"
+            file_extension = file.filename.split(".")[-1]
 
-            file_path = self.upload_folder / unique_filename
+            unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
 
+            file_path = os.path.join(FileUpload.upload_dir, unique_filename)
+            
             # ✅ Save file
             with open(file_path, "wb") as buffer:
                 buffer.write(file.file.read())

@@ -21,8 +21,8 @@ if not os.path.exists(uploads_dir):
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# if uploads_dir.exists():
-#     app.mount("/files", StaticFiles(directory=uploads_dir), name="files")
+if uploads_dir.exists():
+    app.mount("/files", StaticFiles(directory=uploads_dir), name="files")
 
 app.mount('/', app=sio_app)
 
