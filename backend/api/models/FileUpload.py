@@ -20,6 +20,9 @@ class FileUpload:
         try:
             if not file or not file.filename:
                 raise ValueError("No file provided")
+            
+            # Ensure directory exists
+            os.makedirs(FileUpload.upload_dir, exist_ok=True)
 
             file_extension = file.filename.split(".")[-1]
 
