@@ -42,9 +42,9 @@ class Furniture(BaseModel):
             # Process and save files
             images = []
             for file in files:
-                unique_filename = file_upload.save_file(file)
+                file_path = file_upload.save_file(file)
                 # file_url = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
-                images.append(unique_filename)
+                images.append(file_path)
 
             images = [img for img in images if img]
              # Store images based on the number of files

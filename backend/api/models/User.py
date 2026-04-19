@@ -42,10 +42,10 @@ class User(BaseModel):
         try:
             if file:
                 file_upload = FileUpload()
-                file_url = file_upload.save_file(file)
+                file_path = file_upload.save_file(file)
                 # file_url = f" https://furnspace.onrender.com/files/{unique_filename}"
-                user_data['profile_picture'] = file_url
-                return file_url
+                user_data['profile_picture'] = file_path
+                return file_path
                 
             if users_collection.find_one({'email': user_data['email']}):
                 raise HTTPException(
