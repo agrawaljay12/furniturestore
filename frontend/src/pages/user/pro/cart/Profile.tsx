@@ -126,7 +126,10 @@ const Profile: React.FC = () => {
       fetchUserDetails(); // Fetch the updated user data
       setUser(response.data.data); // Update the user data
       setProfilePicUrl(response.data.data.profile_picture);
+      setPreviewPicUrl(undefined);
+      setFile(null);
       setIsEditing(false);
+
       
       // Success notification with animation
       const notification = document.createElement('div');
@@ -172,14 +175,20 @@ const Profile: React.FC = () => {
     fileInputRef.current?.click();
   }
 
-//   const getImageUrl = (path?: string) => {
-//   if (!path) return "https://via.placeholder.com/150";
+  const getImageUrl = (path?: string) => {
+    if (!path) return "https://via.placeholder.com/150";
 
-//   // if already full URL
-//   if (path.startsWith("http")) return path;
+    // Already full URL
+    if (path.startsWith("http")) return path;
 
-//   return `https://furnspace.onrender.com${path}`;
-// };
+    // Convert relative → absolute
+    return `https://furnspace.onrender.com${path}`;
+  };
+
+  useEffect(() => {
+    console.log("USER:", user);
+    console.log("PROFILE PIC:", user?.profile_picture);
+  }, [user]);
 
   // Skeleton loader component
   const SkeletonLoader = () => (
@@ -254,10 +263,12 @@ const Profile: React.FC = () => {
                     className="relative mb-4"
                   >
                     <img
-                     src={
-                      user.profile_picture?user.profile_picture:previewPicUrl || profilePicUrl || "https://via.placeholder.com/150" 
+                      src={
+                        previewPicUrl
+                          ? previewPicUrl
+                          : getImageUrl(profilePicUrl || user?.profile_picture)
                       }
-                      className="w-36 h-36 rounded-full object-cover border-4 border-blue-200 shadow-md cursor-pointer transition-all duration-300"
+                      className="w-36 h-36 rounded-full object-cover border-4 border-blue-200 shadow-md cursor-pointer"
                       onClick={handleProfilePicClick}
                     />
                     <div className="absolute inset-0 rounded-full bg-black bg-opacity-20 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer" onClick={handleProfilePicClick}>
