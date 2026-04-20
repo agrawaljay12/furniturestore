@@ -1,5 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter,HTTPException, status, Request, UploadFile ,File,Depends
+from fastapi.params import Query
 from pydantic import ValidationError
 from fastapi.responses import JSONResponse
 from api.models.Furniture import Furniture
@@ -185,39 +186,45 @@ async def add(request: Request, files: List[UploadFile] = File(...)):
 # Default Port : 10007
 
 @router.get("/list/{user_id}", response_description="List All Furniture for a User")
-async def list_furniture(user_id: str):
+async def list_furniture(
+    user_id: str,
+    limit: int = Query(10),
+    page: int = Query(1),
+    search: str = Query(""),
+    sort_by: str = Query("created_at"),
+    sort_order: str = Query("desc")
+):
     try:
         if not user_id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required")
-        
-        result = Furniture.get_furniture(user_id)
-
-        if not result:  # Checking if the result is empty or None
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No furniture found for the given user ID"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User ID is required"
             )
+
+        query_param = {
+            "limit": limit,
+            "page": page,
+            "search": search,
+            "sort_by": sort_by,
+            "sort_order": sort_order
+        }
+
+        result = Furniture.get_furniture(user_id, query_param)
+
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content={
                 "status": 200,
                 "status_message": "OK",
-                "data": result
+                "data": result["data"],
+                "pagination": result["pagination"]
             }
         )
-    except HTTPException as http_exc:
-        raise http_exc
+
     except Exception as e:
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={
-                "status": 500,
-                "status_message": "Internal Server Error",
-                "data": {
-                    "message": str(e)
-                }
-            }
-        )
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    
 # Request Type : POST
 # Path : https://furnspace.onrender.com/api/v1/furniture/update-furniture
 # Default Port : 10007

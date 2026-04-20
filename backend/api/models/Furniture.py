@@ -1,3 +1,6 @@
+from regex import search
+from requests import Request
+
 from api.db import furniture_collection
 from pydantic import BaseModel, ValidationError
 from fastapi import HTTPException, UploadFile, status
@@ -70,15 +73,64 @@ class Furniture(BaseModel):
             )
         
     @staticmethod
-    def get_furniture(user_id: str) -> List[Dict]:
+    def get_furniture(user_id: str,query_param:dict) -> List[Dict]:
         """ Retrieves all furniture for a particular user from the collection. """
         try:
-            furniture_list = list(furniture_collection.find({"created_by": user_id}))
+            limit = int(query_param.get("limit", 10))
+            page = int(query_param.get("page", 1))
+            search = query_param.get("search", "")
+            sort_by = query_param.get("sort_by", "created_at")
+            sort_order = query_param.get("sort_order", "desc")
+
+
+            # Build the query
+
+            query = {"created_by": user_id}
+
+            # sort direction
+            if sort_order == "asc":
+                sort_direction = ASCENDING
+            else:
+                sort_direction = DESCENDING
+
+            if search:
+                query["$or"] = [
+                    {"title": {"$regex": search, "$options": "i"}},
+                    {"description": {"$regex": search, "$options": "i"}},
+                    {"category": {"$regex": search, "$options": "i"}}
+                ]
+            
+            # pagination logic
+            page = max(page, 1)
+            skip = (page - 1) * limit
+
+            total_count = furniture_collection.count_documents(query)
+
+            furniture_cursor = (
+                furniture_collection
+                .find(query)
+                .sort(sort_by, sort_direction)
+                .skip(skip)
+                .limit(limit)
+            )
+
+            furniture_list = list(furniture_cursor)
+
             for furniture in furniture_list:
-                furniture['_id'] = str(furniture['_id'])  # Convert ObjectId to string
-                if isinstance(furniture['created_at'], datetime):
-                    furniture['created_at'] = furniture['created_at'].isoformat() # Convert datetime to string
-            return furniture_list
+                furniture["_id"] = str(furniture["_id"])
+                if isinstance(furniture.get("created_at"), datetime):
+                    furniture["created_at"] = furniture["created_at"].isoformat()
+
+            return {
+                "data": furniture_list,
+                "pagination": {
+                    "total": total_count,
+                    "page": page,
+                    "limit": limit,
+                    "total_pages": (total_count + limit - 1) // limit
+                }
+            }
+
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
