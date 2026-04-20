@@ -10,7 +10,7 @@ from api.db import users_collection
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from api.utils.upload import upload_image
+from api.models.FileUpload import upload_image
 import os
 from dotenv import load_dotenv
 load_dotenv () 
