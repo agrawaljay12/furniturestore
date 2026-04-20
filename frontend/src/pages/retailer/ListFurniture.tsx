@@ -253,7 +253,7 @@ function ListFurniture(): React.ReactElement {
 
       // Image edit support
       if (file && editingImageIndex !== null) {
-        dataToSend.editing_image_index = editingImageIndex;
+        dataToSend.editing_image_index = Number(editingImageIndex);
       }
 
       formData.append("data", JSON.stringify(dataToSend));
@@ -332,21 +332,18 @@ function ListFurniture(): React.ReactElement {
   };
 
   const handleAddNewImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  e.stopPropagation();
 
-    if (!selectedFurniture) return;
+  if (!selectedFurniture) return;
 
-    if (selectedFurniture.images && selectedFurniture.images.length > 0) {
-      setEditingImageIndex(selectedFurniture.images.length); // append
-    } else {
-      setEditingImageIndex(0);
-    }
+  const newIndex = selectedFurniture.images?.length || 0;
 
-    setFile(null);
-    setImageURL('');
+  setEditingImageIndex(newIndex); // append position
+  setFile(null);
+  setImageURL('');
 
-    fileInputRef.current?.click();
-  };
+  fileInputRef.current?.click();
+};
   
   const handleDelete = async (furnitureId: string) => {
     const isConfirmed = window.confirm("Are you sure you want to delete this furniture?");

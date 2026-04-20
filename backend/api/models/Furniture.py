@@ -132,37 +132,44 @@ class Furniture(BaseModel):
                         new_images.append(file_url)
 
             # IMAGE LOGIC (SIMPLE & CORRECT)
-
             # Case A: New image uploaded
             if new_images:
+                images = current.get("images", []).copy()
 
-                #  If currently single image
-                if current.get("image") and not current.get("images"):
-                    update_doc["image"] = new_images[0]
-                    update_doc["images"] = []
+                # Convert single image → multiple array
+                if not images and current.get("image"):
+                    images = [current["image"]]
 
-                # If multiple images exist
-                else:
-                    images = current.get("images", []).copy()
+                print("Editing index:", editing_index)
+                print("Current images:", images)
 
-                    if editing_index is not None and 0 <= editing_index < len(images):
-                        # Replace specific image
-                        images[editing_index] = new_images[0]
-                    else:
-                        # Add new image
+                # FORCE replace if index is provided
+                if editing_index is not None:
+                    try:
+                        editing_index = int(editing_index)
+
+                        # Replace if index exists
+                        if 0 <= editing_index < len(images):
+                            images[editing_index] = new_images[0]
+                        else:
+                            # If index is equal to length → append (new image)
+                            images.append(new_images[0])
+
+                    except Exception as e:
+                        print("Index error:", e)
                         images.append(new_images[0])
 
-                    update_doc["images"] = images
-                    update_doc["image"] = None
-
-            # Case B: No new image → keep old images
-            else:
-                if current.get("images"):
-                    update_doc["images"] = current["images"]
-                    update_doc["image"] = None
                 else:
-                    update_doc["image"] = current.get("image")
-                    update_doc["images"] = []
+                    # If no index → append
+                    images.append(new_images[0])
+
+                update_doc["images"] = images
+                update_doc["image"] = None
+
+            # No new image → keep existing
+            else:
+                update_doc["images"] = current.get("images", [])
+                update_doc["image"] = current.get("image") if not current.get("images") else None
 
             # Update DB
             result = furniture_collection.update_one(
