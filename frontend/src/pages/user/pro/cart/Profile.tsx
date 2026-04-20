@@ -31,8 +31,8 @@ const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<User | null>(null);
   const [error, setError] = useState<string>("");
-  const [profilePicUrl, setProfilePicUrl] = useState<string | undefined>(undefined);
-  const [previewPicUrl, setPreviewPicUrl] = useState<string | undefined>(undefined);
+  const [, setProfilePicUrl] = useState<string | undefined>(undefined);
+  const [, setPreviewPicUrl] = useState<string | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logUserActivity = useActivityLogger(); // Initialize the logger
   const [isLoading, setIsLoading] = useState(true);
@@ -56,6 +56,8 @@ const Profile: React.FC = () => {
         setUser(response.data.data);
         setFormData(response.data.data);
         setProfilePicUrl(response.data.data.profile_picture);
+        console.log("Fetched user details:", response.data.data); // Debug log
+        console.log("Profile picture URL:", response.data.data.profile_picture); // Debug log
       } else {
         setError("No user data returned from server.");
       }
@@ -181,9 +183,9 @@ const Profile: React.FC = () => {
     return `https://furnspace.onrender.com${path}`;
   };
 
-const imageSrc =
-  previewPicUrl ||
-  getImageUrl(profilePicUrl || user?.profile_picture);
+// const imageSrc =
+//   previewPicUrl ||
+//   getImageUrl(profilePicUrl || user?.profile_picture);
 
   useEffect(() => {
     console.log("USER:", user);
@@ -263,7 +265,7 @@ const imageSrc =
                     className="relative mb-4"
                   >
                     <img
-                      src={imageSrc}
+                      src={user.profile_picture ? getImageUrl(user.profile_picture) : "https://via.placeholder.com/150"}
                       alt="Profile"
                       className="w-36 h-36 rounded-full object-cover border-4 border-blue-200 shadow-md cursor-pointer"
                       onClick={handleProfilePicClick}
