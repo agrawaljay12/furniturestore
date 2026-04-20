@@ -6,6 +6,7 @@ from bson.objectid import ObjectId
 from typing import List, Optional
 import re
 from api.models.FileUpload import FileUpload
+from api.utils.upload import upload_image
 
 
 class User(BaseModel):
@@ -41,12 +42,8 @@ class User(BaseModel):
         """ Adds a new user to the collection. """
         try:
             if file:
-                file_upload = FileUpload()
-
-                file_url = file_upload.save_file(file)
-
-                # file_url = f" https://furnspace.onrender.com/files/{unique_filename}"
-                user_data['profile_picture'] = file_url
+               file_url = upload_image(file)
+               user_data['profile_picture'] = file_url
 
             else:
                 user_data['profile_picture'] = "http://localhost:10007/files/default.png"
@@ -159,12 +156,8 @@ class User(BaseModel):
                 )
 
             if file:
-                # Instantiate the FileUpload
-                file_upload = FileUpload()
-
-                # Save the file and get the unique filename
-                file_url = file_upload.save_file(file)
-                
+                file_url = upload_image(file)
+               
                 update_data['profile_picture'] = file_url
                 
                 print("Profile New : ", update_data['profile_picture'])

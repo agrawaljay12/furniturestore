@@ -10,6 +10,7 @@ from api.db import users_collection
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from api.utils.upload import upload_image
 import os
 from dotenv import load_dotenv
 load_dotenv () 
@@ -42,8 +43,9 @@ class Furniture(BaseModel):
             # Process and save files
             images = []
             for file in files:
-                file_url = file_upload.save_file(file)
-                # file_url = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
+
+                file_url = upload_image(file)
+                
                 images.append(file_url)
 
             images = [img for img in images if img]
@@ -107,8 +109,7 @@ class Furniture(BaseModel):
             if files:
                 for file in files:
                     if file.filename:  # Only process files that have a filename
-                        unique_filename = file_upload.save_file(file)
-                        file_url = f" https://furnspace.onrender.com/files/{unique_filename}"
+                        file_url = upload_image(file)
                         new_images.append(file_url)
                         print(f"Processed new image: {file_url}")
             
