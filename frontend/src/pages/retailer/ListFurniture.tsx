@@ -213,98 +213,69 @@ function ListFurniture(): React.ReactElement {
     setEditMode(false);
   };
 
-  const handleSave = async () => {
+    const handleSave = async () => {
     if (!selectedFurniture) return;
 
     const user_id = localStorage.getItem('token');
     if (!user_id) {
-      setError("User ID is not found in local storage.");
+      setError("User ID not found");
       return;
     }
 
-    // Create backup of original data
-    // const originalData = { ...selectedFurniture };
-    
     setError("Updating furniture...");
 
     const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
-    const formDataToSend = new FormData();
-    
-    // Determine current image type
-    const currentImageType = selectedFurniture.images && selectedFurniture.images.length > 0 
-      ? 'multiple' 
-      : 'single';
-    
-    // Create the data structure to send to the server
-    const dataToSend = {
+    const formData = new FormData();
+
+    // ✅ CLEAN DATA (NO EXTRA FLAGS)
+    const dataToSend: any = {
       ...selectedFurniture,
       user_id,
       furniture_id: selectedFurniture._id,
-      preserve_images: true,
-      preserve_single_image: true,
-      has_new_image: !!file,
-      current_image_type: currentImageType,
-      ...(file && { editing_image_index: editingImageIndex }),
     };
-    
-    console.log("Updating furniture:", selectedFurniture._id);
-    formDataToSend.append("data", JSON.stringify(dataToSend));
-    
+
+    // ✅ Only send index if editing
+    if (file && editingImageIndex !== null) {
+      dataToSend.editing_image_index = editingImageIndex;
+    }
+
+    formData.append("data", JSON.stringify(dataToSend));
+
+    // ✅ IMPORTANT: backend expects "files"
     if (file) {
-      formDataToSend.append("files", file);
+      formData.append("files", file);
     }
 
     try {
-      const response = await axios.post(url, formDataToSend, {
+      const response = await axios.post(url, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
-      if (response.status === 200 && response.data.data) {
-        const updatedFurniture = response.data.data;
-        
-        // Update the selected furniture with the response data 
-        setSelectedFurniture(updatedFurniture);
-        
-        // First update the furniture list with the immediate update
-        setFurnitureList(prevList => {
-          const updatedList = prevList.map(item => {
-            if (item._id === updatedFurniture._id) {
-              console.log("Updating item in list:", updatedFurniture);
-              return updatedFurniture;
-            }
-            return item;
-          });
-          return updatedList;
-        });
+      const updatedFurniture = response.data.data;
 
-        // Reset the editing state
-        setEditMode(false);
-        setFile(null);
-        setImageURL('');
-        setEditingImageIndex(null);
-        setError('');
-        
-        // Show success alert
-        alert("Furniture details updated successfully!");
-        
-        // Close the preview/edit modal after successful update
-        setSelectedFurniture(null);
-        
-        // Refresh the entire data to ensure everything is up to date
-        await fetchProduct();
-      } else {
-        throw new Error(response.data.message || "Failed to update furniture details");
-      }
+      setSelectedFurniture(updatedFurniture);
+
+      setFurnitureList(prev =>
+        prev.map(item =>
+          item._id === updatedFurniture._id ? updatedFurniture : item
+        )
+      );
+
+      // Reset state
+      setEditMode(false);
+      setFile(null);
+      setImageURL('');
+      setEditingImageIndex(null);
+      setError('');
+
+      alert("Updated successfully!");
+      setSelectedFurniture(null);
+
+      await fetchProduct();
+
     } catch (error: any) {
-      console.error('There was an error updating the furniture data!', error);
-      
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-      }
-      
-      setError("Failed to update furniture: " + (error.response?.data?.detail || error.message || "Unknown error"));
-      alert('Failed to update furniture. Please check the console for details.');
+      console.error(error);
+      setError("Update failed");
     }
   };
 
@@ -336,54 +307,41 @@ function ListFurniture(): React.ReactElement {
   };
 
   const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    
-    if (selectedFurniture) {
-      // Set the editing image index based on the furniture's image structure
-      if (selectedFurniture.images && selectedFurniture.images.length > 0) {
-        // For multiple images, use the clicked index or add to the end
-        setEditingImageIndex(index === null ? selectedFurniture.images.length : index);
-        console.log(`Editing image at index ${index} in collection of ${selectedFurniture.images.length} images`);
-      } else if (selectedFurniture.image) {
-        // For single image, use -1 to indicate we're working with the single image
-        setEditingImageIndex(-1); 
-        console.log('Editing single image');
-      } else {
-        // No images yet, use -2 to indicate we're adding the first image
-        setEditingImageIndex(-2);
-        console.log('Adding first image');
-      }
-      
-      // Reset file state
-      setFile(null);
-      setImageURL('');
-      
-      // Trigger file input click
-      if (fileInputRef.current) {
-        fileInputRef.current.click();
-      }
-    }
+  e?.stopPropagation();
+
+  if (!selectedFurniture) return;
+
+  if (selectedFurniture.images && selectedFurniture.images.length > 0) {
+    // multiple images
+    setEditingImageIndex(index ?? 0);
+  } else {
+    // single image
+    setEditingImageIndex(0);
+  }
+
+  setFile(null);
+  setImageURL('');
+
+  fileInputRef.current?.click();
   };
 
   const handleAddNewImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (selectedFurniture?.images && selectedFurniture.images.length > 0) {
-      setEditingImageIndex(selectedFurniture.images.length); // Add at end of collection
-    } else if (selectedFurniture?.image) {
-      setEditingImageIndex(-1); // Convert from single image to collection
+
+    if (!selectedFurniture) return;
+
+    if (selectedFurniture.images && selectedFurniture.images.length > 0) {
+      setEditingImageIndex(selectedFurniture.images.length); // append
     } else {
-      setEditingImageIndex(-2); // No images yet, add first image
+      setEditingImageIndex(0);
     }
-    
+
     setFile(null);
     setImageURL('');
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
 
+    fileInputRef.current?.click();
+  };
+  
   const handleDelete = async (furnitureId: string) => {
     const isConfirmed = window.confirm("Are you sure you want to delete this furniture?");
     if (!isConfirmed) {

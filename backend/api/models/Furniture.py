@@ -86,125 +86,97 @@ class Furniture(BaseModel):
             )
         
     @staticmethod
-    def update_furniture(user_id: str, furniture_id: str, update_data: dict, files: Optional[List[UploadFile]] = None) -> bool:
-        """ Updates a furniture item for a particular user based on furniture_id. """
+    def update_furniture(
+        user_id: str,
+        furniture_id: str,
+        update_data: dict,
+        files: Optional[List[UploadFile]] = None
+    ) -> bool:
         try:
-            # Log beginning of update process for debugging
-            print(f"Starting update for furniture ID: {furniture_id}")
-            
-            file_upload = FileUpload()  # Initialize FileUpload class
+            print(f"Updating furniture ID: {furniture_id}")
 
-            # Extract special flags from update data
-            editing_image_index = update_data.pop("editing_image_index", None)
-            has_new_image = update_data.pop("has_new_image", False)
-            current_image_type = update_data.pop("current_image_type", None)
-            
-            # Normalize editing_image_index to integer
-            if editing_image_index is not None:
-                if isinstance(editing_image_index, str) and editing_image_index.isdigit():
-                    editing_image_index = int(editing_image_index)
-                elif isinstance(editing_image_index, str) and editing_image_index.startswith('-') and editing_image_index[1:].isdigit():
-                    editing_image_index = int(editing_image_index)
+            # Get current furniture
+            current = furniture_collection.find_one({
+                "_id": ObjectId(furniture_id),
+                "created_by": user_id
+            })
 
-            # Process and save files if provided
+            if not current:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Furniture not found"
+                )
+
+            update_doc = {}
+
+            # Update normal fields (excluding image fields)
+            for key, value in update_data.items():
+                if key not in ["image", "images", "editing_image_index"]:
+                    update_doc[key] = value
+
+            # Handle image update
+            editing_index = update_data.get("editing_image_index")
+
+            # Convert index to int safely
+            if isinstance(editing_index, str) and editing_index.isdigit():
+                editing_index = int(editing_index)
+
             new_images = []
+
+            # Upload new images
+            file_upload = FileUpload()  # Initialize FileUpload class
             if files:
                 for file in files:
-                    if file.filename:  # Only process files that have a filename
-                        file_upload = FileUpload()
-                        file_url = file_upload.upload_image(file)
+                    if file.filename:
+                        file_url = file_upload.upload_image(file)  # Cloudinary or your upload logic
                         new_images.append(file_url)
-                        print(f"Processed new image: {file_url}")
-            
-            # Get current furniture data
-            current_furniture = furniture_collection.find_one({"_id": ObjectId(furniture_id)})
-            if not current_furniture:
-                print(f"Furniture not found with ID: {furniture_id}")
-                raise HTTPException(status_code=404, detail="Furniture not found")
 
-            # Create update document with both detail fields and image fields
-            update_doc = {}
-            
-            # Add all non-image fields from update_data
-            for key, value in update_data.items():
-                if key not in ["images", "image"]:
-                    update_doc[key] = value
-            
-            # Handle image updates based on the file upload context
+            # IMAGE LOGIC (SIMPLE & CORRECT)
+
+            # Case A: New image uploaded
             if new_images:
-                print(f"Processing new images with editing_image_index={editing_image_index}")
-                
-                # Handle single image replacement or first image
-                if editing_image_index == -2:
-                    update_doc["image"] = new_images[0]
-                    update_doc["images"] = []
-                    print("Setting single image")
-                    
-                # Handle converting from single to multiple images
-                elif editing_image_index == -1 and current_furniture.get("image"):
-                    # Create new collection with existing image + new image
-                    update_doc["images"] = [current_furniture["image"]] + new_images
-                    update_doc["image"] = None  # Clear single image
-                    print("Converting from single to multiple images")
-                    
-                # Handle adding to or updating existing collection
-                elif current_furniture.get("images") or (current_image_type == "multiple"):
-                    images = current_furniture.get("images", []).copy()
-                    
-                    # Add image to collection
-                    if editing_image_index is None or editing_image_index >= len(images):
-                        images.append(new_images[0])
-                        print(f"Adding new image to collection at position {len(images)-1}")
-                    else:
-                        # Replace image at specific index
-                        images[editing_image_index] = new_images[0]
-                        print(f"Replacing image at index {editing_image_index}")
-                    
-                    update_doc["images"] = images
-                    update_doc["image"] = None  # Ensure single image field is empty
-                
-                # Default: set as single image if no other conditions apply
-                else:
-                    update_doc["image"] = new_images[0]
-                    update_doc["images"] = []
-                    print("Setting as single image (default)")
-            
-            # If no new images but we have existing image data in update_data
-            elif "images" in update_data:
-                update_doc["images"] = update_data["images"]
-                update_doc["image"] = None  # Clear single image field
-            elif "image" in update_data:
-                update_doc["image"] = update_data["image"]
-                update_doc["images"] = []  # Clear multiple images
-                
-            # For updates with no image changes, preserve existing image data
-            else:
-                if "images" in current_furniture and current_furniture["images"]:
-                    update_doc["images"] = current_furniture["images"]
-                    update_doc["image"] = None  # Ensure consistency
-                elif "image" in current_furniture and current_furniture["image"]:
-                    update_doc["image"] = current_furniture["image"]
-                    update_doc["images"] = []  # Ensure consistency
 
-            # Execute update in database
-            print(f"Updating with document: {update_doc}")
+                #  If currently single image
+                if current.get("image") and not current.get("images"):
+                    update_doc["image"] = new_images[0]
+                    update_doc["images"] = []
+
+                # If multiple images exist
+                else:
+                    images = current.get("images", []).copy()
+
+                    if editing_index is not None and 0 <= editing_index < len(images):
+                        # Replace specific image
+                        images[editing_index] = new_images[0]
+                    else:
+                        # Add new image
+                        images.append(new_images[0])
+
+                    update_doc["images"] = images
+                    update_doc["image"] = None
+
+            # Case B: No new image → keep old images
+            else:
+                if current.get("images"):
+                    update_doc["images"] = current["images"]
+                    update_doc["image"] = None
+                else:
+                    update_doc["image"] = current.get("image")
+                    update_doc["images"] = []
+
+            # Update DB
             result = furniture_collection.update_one(
-                {"_id": ObjectId(furniture_id)},
+                {"_id": ObjectId(furniture_id), "created_by": user_id},
                 {"$set": update_doc}
             )
-            
-            # Log result for debugging
-            print(f"Update result: {result.modified_count} document(s) modified")
+
+            print("Updated Data:", update_doc)
+            print("Modified count:", result.modified_count)
+
             return True
-            
-        except ValidationError as ve:
-            print(f"Validation error: {str(ve)}")
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=str(ve)
-            )
+
         except Exception as e:
-            print(f"Error updating furniture: {str(e)}")
+            print("Update Error:", str(e))
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=str(e)
