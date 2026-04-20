@@ -214,69 +214,75 @@ function ListFurniture(): React.ReactElement {
   };
 
     const handleSave = async () => {
-    if (!selectedFurniture) return;
 
-    const user_id = localStorage.getItem('token');
-    if (!user_id) {
-      setError("User ID not found");
-      return;
-    }
+      if (!selectedFurniture) return;
 
-    setError("Updating furniture...");
+      const user_id = localStorage.getItem('token');
+      if (!user_id) {
+        setError("User ID not found");
+        return;
+      }
 
-    const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
-    const formData = new FormData();
+      setError("Updating furniture...");
 
-    // ✅ CLEAN DATA (NO EXTRA FLAGS)
-    const dataToSend: any = {
-      ...selectedFurniture,
-      user_id,
-      furniture_id: selectedFurniture._id,
-    };
+      const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
+      const formData = new FormData();
 
-    // ✅ Only send index if editing
-    if (file && editingImageIndex !== null) {
-      dataToSend.editing_image_index = editingImageIndex;
-    }
+      // CLEAN + CONTROLLED DATA ONLY
+      const dataToSend: any = {
+        furniture_id: selectedFurniture._id,
+        title: selectedFurniture.title,
+        description: selectedFurniture.description,
+        category: selectedFurniture.category,
 
-    formData.append("data", JSON.stringify(dataToSend));
+        // Ensure numbers
+        price: selectedFurniture.price ? Number(selectedFurniture.price) : null,
+        rent_price: selectedFurniture.rent_price ? Number(selectedFurniture.rent_price) : null,
 
-    // ✅ IMPORTANT: backend expects "files"
-    if (file) {
-      formData.append("files", file);
-    }
+        // Ensure boolean
+        is_for_sale: Boolean(selectedFurniture.is_for_sale),
+        is_for_rent: Boolean(selectedFurniture.is_for_rent),
 
-    try {
-      const response = await axios.post(url, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
+        condition: selectedFurniture.condition,
+        availability_status: selectedFurniture.availability_status,
+        dimensions: selectedFurniture.dimensions,
+        location: selectedFurniture.location,
 
-      const updatedFurniture = response.data.data;
+        user_id: user_id
+      };
 
-      setSelectedFurniture(updatedFurniture);
+      // Image edit support
+      if (file && editingImageIndex !== null) {
+        dataToSend.editing_image_index = editingImageIndex;
+      }
 
-      setFurnitureList(prev =>
-        prev.map(item =>
-          item._id === updatedFurniture._id ? updatedFurniture : item
-        )
-      );
+      formData.append("data", JSON.stringify(dataToSend));
 
-      // Reset state
-      setEditMode(false);
-      setFile(null);
-      setImageURL('');
-      setEditingImageIndex(null);
-      setError('');
+      if (file) {
+        formData.append("files", file);
+      }
 
-      alert("Updated successfully!");
-      setSelectedFurniture(null);
+      try {
+        await axios.post(url, formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
 
-      await fetchProduct();
+        // IMPORTANT: refetch instead of trusting response
+        await fetchProduct();
 
-    } catch (error: any) {
-      console.error(error);
-      setError("Update failed");
-    }
+        setEditMode(false);
+        setSelectedFurniture(null);
+        setFile(null);
+        setImageURL('');
+        setEditingImageIndex(null);
+        setError('');
+
+        alert("Furniture updated successfully!");
+
+      } catch (error: any) {
+        console.error(error?.response?.data || error);
+        setError(error?.response?.data?.detail || "Update failed");
+      }
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {

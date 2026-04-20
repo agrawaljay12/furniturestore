@@ -234,6 +234,7 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
             # Handle form data (with or without files)
             form = await request.form()
             data_str = form.get('data')
+
             if not data_str:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -249,11 +250,12 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
             print(f"Parsed JSON data: {data}")
 
         # Basic validation for required fields
-        required_fields = ['furniture_id', 'title', 'category', 'price']
+        required_fields = ['furniture_id', 'title', 'category']
+
         for field in required_fields:
             if field not in data:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=400,
                     detail=f"Missing required field: {field}"
                 )
 
@@ -271,12 +273,7 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
         dimensions = data.get('dimensions', '')
         location = data.get('location', 'Unknown')
         created_by = data.get('created_by') or data.get('user_id')
-        
-        # Image update context
-        editing_image_index = data.get('editing_image_index')
-        has_new_image = data.get('has_new_image', False)
-        current_image_type = data.get('current_image_type')
-        
+              
         # Image data if present
         images = data.get('images')
         image = data.get('image')
@@ -305,6 +302,22 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="The 'is_for_sale' field must be a boolean"
             )
+        
+        # ✅ Sale validation
+        if is_for_sale:
+            if price is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Price is required when item is for sale"
+                )
+
+        # ✅ Rent validation
+        if is_for_rent:
+            if rent_price is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Rent price is required when item is for rent"
+                 )
 
         if not created_by:
             raise HTTPException(
@@ -317,23 +330,25 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
             "title": title,
             "description": description,
             "category": category,
-            "price": price,
             "is_for_rent": is_for_rent,
-            "rent_price": rent_price,
             "is_for_sale": is_for_sale,
             "condition": condition,
             "availability_status": availability_status,
             "dimensions": dimensions,
             "location": location,
             "created_by": created_by,
-            "editing_image_index": editing_image_index,
-            "has_new_image": has_new_image,
-            "current_image_type": current_image_type
         }
         
-        # Include image data if present
+         # Add only if valid
+        if is_for_sale:
+            update_data["price"] = price
+
+        if is_for_rent:
+            update_data["rent_price"] = rent_price
+
         if images is not None:
             update_data["images"] = images
+
         if image is not None:
             update_data["image"] = image
 
@@ -368,6 +383,7 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
     except HTTPException as http_exc:
         print(f"HTTPException: {http_exc.detail}")
         raise http_exc
+    
     except Exception as e:
         print(f"Exception: {str(e)}")
         return JSONResponse(
