@@ -252,9 +252,11 @@ function ListFurniture(): React.ReactElement {
       };
 
       // Image edit support
-      if (file && editingImageIndex !== null) {
-        dataToSend.editing_image_index = Number(editingImageIndex);
+      if (file) {
+        dataToSend.editing_image_index = editingImageIndex ?? 0;
       }
+
+      console.log("Editing index sending:", editingImageIndex);
 
       formData.append("data", JSON.stringify(dataToSend));
 

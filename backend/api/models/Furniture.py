@@ -114,12 +114,13 @@ class Furniture(BaseModel):
                 if key not in ["image", "images", "editing_image_index"]:
                     update_doc[key] = value
 
-            # Handle image update
             editing_index = update_data.get("editing_image_index")
 
-            # Convert index to int safely
-            if isinstance(editing_index, str) and editing_index.isdigit():
-                editing_index = int(editing_index)
+            # Ensure integer or None
+            try:
+                editing_index = int(editing_index) if editing_index is not None else None
+            except:
+                editing_index = None
 
             new_images = []
 
@@ -132,41 +133,36 @@ class Furniture(BaseModel):
                         new_images.append(file_url)
 
             # IMAGE LOGIC (SIMPLE & CORRECT)
-            # Case A: New image uploaded
+            # IMAGE HANDLING
             if new_images:
                 images = current.get("images", []).copy()
 
-                # Convert single image → multiple array
+                # Convert single → multiple
                 if not images and current.get("image"):
                     images = [current["image"]]
 
-                print("Editing index:", editing_index)
-                print("Current images:", images)
+                print("FINAL editing_index:", editing_index)
+                print("Images BEFORE:", images)
 
-                # FORCE replace if index is provided
+                # FIXED LOGIC
                 if editing_index is not None:
-                    try:
-                        editing_index = int(editing_index)
-
-                        # Replace if index exists
-                        if 0 <= editing_index < len(images):
-                            images[editing_index] = new_images[0]
-                        else:
-                            # If index is equal to length → append (new image)
-                            images.append(new_images[0])
-
-                    except Exception as e:
-                        print("Index error:", e)
+                    if 0 <= editing_index < len(images):
+                        # Replace existing image
+                        images[editing_index] = new_images[0]
+                    elif editing_index == len(images):
+                        # Add new image at end
                         images.append(new_images[0])
-
+                    else:
+                        # Invalid index → fallback to append
+                        print("Invalid index → appending")
+                        images.append(new_images[0])
                 else:
-                    # If no index → append
+                    # No index → append
                     images.append(new_images[0])
 
                 update_doc["images"] = images
                 update_doc["image"] = None
 
-            # No new image → keep existing
             else:
                 update_doc["images"] = current.get("images", [])
                 update_doc["image"] = current.get("image") if not current.get("images") else None
