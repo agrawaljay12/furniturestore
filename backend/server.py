@@ -2,40 +2,32 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-# from bind import sio_app
+from bind import sio_app
 import os
-import cloudinary
-from dotenv import load_dotenv
-# from pathlib import Path
+from pathlib import Path
 
-
-load_dotenv()
 
 
 app = FastAPI()
 
 # if uploads folder doesn't exist, create it
 
-# BASE_DIR = Path(__file__).resolve().parent.parent
-# static_dir = BASE_DIR / "static"
-# uploads_dir = static_dir / "uploads"
+BASE_DIR = Path(__file__).resolve().parent.parent
+static_dir = BASE_DIR / "static"
+uploads_dir = static_dir / "uploads"
 
-# if not os.path.exists(uploads_dir):
-#         os.makedirs(uploads_dir, exist_ok=True)
+if not os.path.exists(uploads_dir):
+        os.makedirs(uploads_dir, exist_ok=True)
 
-# if static_dir.exists():
-#     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# if uploads_dir.exists():
-#     app.mount("/files", StaticFiles(directory=uploads_dir), name="files")
+if uploads_dir.exists():
+    app.mount("/files", StaticFiles(directory=uploads_dir), name="files")
 
-# app.mount('/', app=sio_app)
+app.mount('/', app=sio_app)
 
-cloudinary.config(
-    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
-    api_key=os.getenv("CLOUDINARY_API_KEY"),
-    api_secret=os.getenv("CLOUDINARY_API_SECRET")
-)
+
 
 app.add_middleware(
     CORSMiddleware,

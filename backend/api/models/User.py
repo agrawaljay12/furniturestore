@@ -5,7 +5,7 @@ from api.db import users_collection
 from bson.objectid import ObjectId
 from typing import List, Optional
 import re
-from api.models.FileUpload import FileUpload
+# from api.models.FileUpload import FileUpload
 from api.utils.upload import upload_image
 
 
