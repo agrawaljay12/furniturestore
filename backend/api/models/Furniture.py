@@ -10,7 +10,7 @@ from api.db import users_collection
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from api.models.FileUpload import upload_image
+from api.models.FileUpload import Fileupload
 import os
 from dotenv import load_dotenv
 load_dotenv () 
@@ -44,7 +44,9 @@ class Furniture(BaseModel):
             images = []
             for file in files:
 
-                file_url = upload_image(file)
+                file_upload = FileUpload()  # Initialize FileUpload class
+
+                file_url = file_upload.upload_image(file)
                 
                 images.append(file_url)
 
@@ -109,7 +111,8 @@ class Furniture(BaseModel):
             if files:
                 for file in files:
                     if file.filename:  # Only process files that have a filename
-                        file_url = upload_image(file)
+                        file_upload = FileUpload()
+                        file_url = file_upload.upload_image(file)
                         new_images.append(file_url)
                         print(f"Processed new image: {file_url}")
             

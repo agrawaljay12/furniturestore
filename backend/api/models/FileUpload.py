@@ -7,12 +7,16 @@ class Image(BaseModel):
     filename: str
     filepath: str
 
-def upload_image(file):
-    try:
-        result = cloudinary.uploader.upload(file.file)
-        return result["secure_url"]  # ✅ important
-    except Exception as e:
-        raise Exception(f"Cloudinary upload failed: {str(e)}")
+
+class FileUpload:
+    
+    @staticmethod
+    def upload_image(file):
+        try:
+            result = cloudinary.uploader.upload(file.file)
+            return result["secure_url"]  # ✅ important
+        except Exception as e:
+            raise Exception(f"Cloudinary upload failed: {str(e)}")
     
 # class FileUpload:
 

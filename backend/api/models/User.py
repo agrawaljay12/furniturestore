@@ -5,8 +5,7 @@ from api.db import users_collection
 from bson.objectid import ObjectId
 from typing import List, Optional
 import re
-# from api.models.FileUpload import FileUpload
-from api.models.FileUpload import upload_image
+from api.models.FileUpload import FileUpload
 
 
 class User(BaseModel):
@@ -42,7 +41,10 @@ class User(BaseModel):
         """ Adds a new user to the collection. """
         try:
             if file:
-               file_url = upload_image(file)
+               file_upload = FileUpload()  # Initialize FileUpload class
+
+               file_url = file_upload.upload_image(file)
+
                user_data['profile_picture'] = file_url
 
             else:
@@ -156,7 +158,10 @@ class User(BaseModel):
                 )
 
             if file:
-                file_url = upload_image(file)
+
+                file_upload = FileUpload()  # Initialize FileUpload class
+
+                file_url = file_upload.upload_image(file)
                
                 update_data['profile_picture'] = file_url
                 
