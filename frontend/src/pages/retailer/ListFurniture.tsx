@@ -243,18 +243,18 @@ function ListFurniture(): React.ReactElement {
       const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
       const formData = new FormData();
 
-      // CLEAN + CONTROLLED DATA ONLY
+      // -------------------------
+      // CLEAN DATA
+      // -------------------------
       const dataToSend: any = {
         furniture_id: selectedFurniture._id,
         title: selectedFurniture.title,
         description: selectedFurniture.description,
         category: selectedFurniture.category,
 
-        // Ensure numbers
         price: selectedFurniture.price ? Number(selectedFurniture.price) : null,
         rent_price: selectedFurniture.rent_price ? Number(selectedFurniture.rent_price) : null,
 
-        // Ensure boolean
         is_for_sale: Boolean(selectedFurniture.is_for_sale),
         is_for_rent: Boolean(selectedFurniture.is_for_rent),
 
@@ -266,17 +266,16 @@ function ListFurniture(): React.ReactElement {
         user_id: user_id
       };
 
-      // Image edit support
-      if (file) {
-        dataToSend.editing_image_index = editingImageIndex ?? 0;
-      }
-
-      console.log("Editing index sending:", editingImageIndex);
-
       formData.append("data", JSON.stringify(dataToSend));
 
+      // -------------------------
+      // IMAGE REPLACEMENT
+      // -------------------------
       if (file) {
         formData.append("files", file);
+
+        // send index separately
+        formData.append("replace_indexes", String(editingImageIndex ?? 0));
       }
 
       try {
@@ -284,7 +283,6 @@ function ListFurniture(): React.ReactElement {
           headers: { "Content-Type": "multipart/form-data" }
         });
 
-        // IMPORTANT: refetch instead of trusting response
         await fetchProduct();
 
         setEditMode(false);
@@ -300,7 +298,7 @@ function ListFurniture(): React.ReactElement {
         console.error(error?.response?.data || error);
         setError(error?.response?.data?.detail || "Update failed");
       }
-  };
+    };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
     const newFile = event.target.files?.[0];

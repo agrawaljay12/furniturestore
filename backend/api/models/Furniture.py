@@ -220,100 +220,189 @@ class Furniture(BaseModel):
         user_id: str,
         furniture_id: str,
         update_data: dict,
-        files: Optional[List[UploadFile]] = None
+        files: Optional[List[UploadFile]] = None,
+        replace_indexes: Optional[List[int]] = None
     ) -> bool:
         try:
-            print(f"Updating furniture ID: {furniture_id}")
-
-            # Get current furniture
             current = furniture_collection.find_one({
                 "_id": ObjectId(furniture_id),
                 "created_by": user_id
             })
 
             if not current:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Furniture not found"
-                )
+                return False
 
-            update_doc = {}
+            existing_images = current.get("images", [])
 
-            # Update normal fields (excluding image fields)
-            for key, value in update_data.items():
-                if key not in ["image", "images", "editing_image_index"]:
-                    update_doc[key] = value
-
-            editing_index = update_data.get("editing_image_index")
-
-            # Ensure integer or None
-            try:
-                editing_index = int(editing_index) if editing_index is not None else None
-            except:
-                editing_index = None
-
-            new_images = []
-
-            # Upload new images
-            file_upload = FileUpload()  # Initialize FileUpload class
+            # -------------------------
+            # IMAGE HANDLING (FIXED)
+            # -------------------------
             if files:
+                new_image_urls = []
+
                 for file in files:
-                    if file.filename:
-                        file_url = file_upload.upload_image(file)  # Cloudinary or your upload logic
-                        new_images.append(file_url)
+                    unique_filename = FileUpload().save(file)
+                    file_url = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
+                    new_image_urls.append(file_url)
 
-            # IMAGE LOGIC (SIMPLE & CORRECT)
-            # IMAGE HANDLING
-            if new_images:
-                images = current.get("images", []).copy()
+                # ✅ CASE 1: Replace specific indexes
+                if replace_indexes and len(replace_indexes) == len(new_image_urls):
 
-                # Convert single → multiple
-                if not images and current.get("image"):
-                    images = [current["image"]]
+                    for i, index in enumerate(replace_indexes):
+                        if index < len(existing_images):
+                            existing_images[index] = new_image_urls[i]
+                        else:
+                            # if index invalid → append
+                            existing_images.append(new_image_urls[i])
 
-                print("FINAL editing_index:", editing_index)
-                print("Images BEFORE:", images)
+                # ✅ CASE 2: Single existing image → replace
+                elif len(existing_images) == 1 and len(new_image_urls) == 1:
+                    existing_images = new_image_urls
 
-                # FIXED LOGIC
-                if editing_index is not None:
-                    if 0 <= editing_index < len(images):
-                        # Replace existing image
-                        images[editing_index] = new_images[0]
-                    elif editing_index == len(images):
-                        # Add new image at end
-                        images.append(new_images[0])
-                    else:
-                        # Invalid index → fallback to append
-                        print("Invalid index → appending")
-                        images.append(new_images[0])
+                # ✅ CASE 3: Append new images (DEFAULT SAFE BEHAVIOR)
                 else:
-                    # No index → append
-                    images.append(new_images[0])
+                    existing_images.extend(new_image_urls)
 
-                update_doc["images"] = images
-                update_doc["image"] = None
+            # -------------------------
+            # UPDATE DATA
+            # -------------------------
+            update_data["images"] = existing_images
+            update_data["updated_at"] = datetime.utcnow()
 
-            else:
-                update_doc["images"] = current.get("images", [])
-                update_doc["image"] = current.get("image") if not current.get("images") else None
-
-            # Update DB
-            result = furniture_collection.update_one(
-                {"_id": ObjectId(furniture_id), "created_by": user_id},
-                {"$set": update_doc}
+            furniture_collection.update_one(
+                {"_id": ObjectId(furniture_id)},
+                {"$set": update_data}
             )
-
-            print("Updated Data:", update_doc)
-            print("Modified count:", result.modified_count)
 
             return True
 
         except Exception as e:
-            print("Update Error:", str(e))
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(e)
-            )
+            raise HTTPException(status_code=500, detail=str(e))@staticmethod
+        
+def update_furniture(
+    user_id: str,
+    furniture_id: str,
+    update_data: dict,
+    files: Optional[List[UploadFile]] = None,
+    replace_indexes: Optional[List[int]] = None
+) -> bool:
+    try:
+        current = furniture_collection.find_one({
+            "_id": ObjectId(furniture_id),
+            "created_by": user_id
+        })
+
+        if not current:
+            return False
+
+        existing_images = current.get("images", [])
+
+        # -------------------------
+        # IMAGE HANDLING (FIXED)
+        # -------------------------
+        if files:
+            new_image_urls = []
+
+            for file in files:
+                unique_filename = FileUpload().save(file)
+                file_url = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
+                new_image_urls.append(file_url)
+
+            # ✅ CASE 1: Replace specific indexes
+            if replace_indexes and len(replace_indexes) == len(new_image_urls):
+
+                for i, index in enumerate(replace_indexes):
+                    if index < len(existing_images):
+                        existing_images[index] = new_image_urls[i]
+                    else:
+                        # if index invalid → append
+                        existing_images.append(new_image_urls[i])
+
+            # ✅ CASE 2: Single existing image → replace
+            elif len(existing_images) == 1 and len(new_image_urls) == 1:
+                existing_images = new_image_urls
+
+            # ✅ CASE 3: Append new images (DEFAULT SAFE BEHAVIOR)
+            else:
+                existing_images.extend(new_image_urls)
+
+        # -------------------------
+        # UPDATE DATA
+        # -------------------------
+        update_data["images"] = existing_images
+        update_data["updated_at"] = datetime.utcnow()
+
+        furniture_collection.update_one(
+            {"_id": ObjectId(furniture_id)},
+            {"$set": update_data}
+        )
+
+        return True
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))@staticmethod
+def update_furniture(
+    user_id: str,
+    furniture_id: str,
+    update_data: dict,
+    files: Optional[List[UploadFile]] = None,
+    replace_indexes: Optional[List[int]] = None
+) -> bool:
+    try:
+        current = furniture_collection.find_one({
+            "_id": ObjectId(furniture_id),
+            "created_by": user_id
+        })
+
+        if not current:
+            return False
+
+        existing_images = current.get("images", [])
+
+        # -------------------------
+        # IMAGE HANDLING (FIXED)
+        # -------------------------
+        if files:
+            new_image_urls = []
+
+            for file in files:
+                unique_filename = FileUpload().save(file)
+                file_url = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
+                new_image_urls.append(file_url)
+
+            # ✅ CASE 1: Replace specific indexes
+            if replace_indexes and len(replace_indexes) == len(new_image_urls):
+
+                for i, index in enumerate(replace_indexes):
+                    if index < len(existing_images):
+                        existing_images[index] = new_image_urls[i]
+                    else:
+                        # if index invalid → append
+                        existing_images.append(new_image_urls[i])
+
+            # ✅ CASE 2: Single existing image → replace
+            elif len(existing_images) == 1 and len(new_image_urls) == 1:
+                existing_images = new_image_urls
+
+            # ✅ CASE 3: Append new images (DEFAULT SAFE BEHAVIOR)
+            else:
+                existing_images.extend(new_image_urls)
+
+        # -------------------------
+        # UPDATE DATA
+        # -------------------------
+        update_data["images"] = existing_images
+        update_data["updated_at"] = datetime.utcnow()
+
+        furniture_collection.update_one(
+            {"_id": ObjectId(furniture_id)},
+            {"$set": update_data}
+        )
+
+        return True
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
             
     @staticmethod
     def search_furniture_by_category_or_title(category: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
