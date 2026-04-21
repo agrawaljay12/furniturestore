@@ -72,7 +72,7 @@ class Furniture(BaseModel):
             )
         
     @staticmethod
-    def get_furniture(user_id: str, query_param: dict):
+    def get_furniture(user_id: str, query_param: dict) -> Dict:
         try:
             # -------------------------
             # ✅ PAGINATION
@@ -89,17 +89,11 @@ class Furniture(BaseModel):
             type_filter = query_param.get("type", "all")
 
             # -------------------------
-            # ✅ SORT
+            # ✅ SORT VALIDATION
             # -------------------------
-            allowed_sort_fields = [
-                "title",
-                "category",
-                "created_at",
-                "price",
-                "rent_price"
-            ]
-
+            allowed_sort_fields = ["title", "category", "created_at","price","rent_price"]
             sort_by = query_param.get("sort_by", "created_at")
+
             if sort_by not in allowed_sort_fields:
                 sort_by = "created_at"
 
@@ -133,84 +127,19 @@ class Furniture(BaseModel):
                 ]
 
             # -------------------------
-            # ✅ COUNT (before aggregation)
+            # ✅ DB QUERY
             # -------------------------
             total_count = furniture_collection.count_documents(query)
 
-            # -------------------------
-            # ✅ AGGREGATION PIPELINE
-            # -------------------------
-            pipeline = []
+            cursor = (
+                furniture_collection
+                .find(query)
+                .sort(sort_by, sort_direction)
+                .skip(skip)
+                .limit(limit)
+            )
 
-            # MATCH
-            pipeline.append({
-                "$match": query
-            })
-
-            # CONVERT STRING → NUMBER
-            pipeline.append({
-                "$addFields": {
-                    "price_num": {
-                        "$cond": [
-                            { "$or": [
-                                { "$eq": ["$price", ""] },
-                                { "$eq": ["$price", None] }
-                            ]},
-                            0,
-                            {
-                                "$convert": {
-                                    "input": "$price",
-                                    "to": "double",
-                                    "onError": 0,
-                                    "onNull": 0
-                                }
-                            }
-                        ]
-                    },
-                    "rent_price_num": {
-                        "$cond": [
-                            { "$or": [
-                                { "$eq": ["$rent_price", ""] },
-                                { "$eq": ["$rent_price", None] }
-                            ]},
-                            0,
-                            {
-                                "$convert": {
-                                    "input": "$rent_price",
-                                    "to": "double",
-                                    "onError": 0,
-                                    "onNull": 0
-                                }
-                            }
-                        ]
-                    }
-                }
-            })
-            # SORT FIELD MAP
-            sort_field_map = {
-                "price": "price_num",
-                "rent_price": "rent_price_num",
-                "title": "title",
-                "category": "category",
-                "created_at": "created_at"
-            }
-
-            actual_sort_field = sort_field_map.get(sort_by, "created_at")
-
-            # SORT
-            pipeline.append({
-                "$sort": {
-                    actual_sort_field: sort_direction,
-                    "created_at": -1  # secondary sort (stable)
-                }
-            })
-
-            # PAGINATION
-            pipeline.append({"$skip": skip})
-            pipeline.append({"$limit": limit})
-
-            # EXECUTE
-            furniture_list = list(furniture_collection.aggregate(pipeline))
+            furniture_list = list(cursor)
 
             # -------------------------
             # ✅ FORMAT RESPONSE
@@ -221,9 +150,6 @@ class Furniture(BaseModel):
                 if isinstance(item.get("created_at"), datetime):
                     item["created_at"] = item["created_at"].isoformat()
 
-            # -------------------------
-            # ✅ FINAL RESPONSE
-            # -------------------------
             return {
                 "data": furniture_list,
                 "pagination": {
@@ -236,7 +162,7 @@ class Furniture(BaseModel):
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-                
+            
 
     @staticmethod
     def update_furniture(
