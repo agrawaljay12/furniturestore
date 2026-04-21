@@ -104,7 +104,7 @@ class Furniture(BaseModel):
                 sort_by = "created_at"
 
             sort_order = query_param.get("sort_order", "desc")
-            sort_direction = ASCENDING if sort_order == "asc" else DESCENDING
+            sort_direction = 1 if sort_order == "asc" else -1
 
             # -------------------------
             # BASE QUERY
@@ -133,28 +133,64 @@ class Furniture(BaseModel):
                 ]
 
             # -------------------------
-            # HANDLE NULL VALUES
-            # -------------------------
-            if sort_by in ["price", "rent_price"]:
-                query[sort_by] = {"$exists": True}
-
-            # -------------------------
-            # DATABASE QUERY
+            # TOTAL COUNT
             # -------------------------
             total_count = furniture_collection.count_documents(query)
 
-            cursor = (
-                furniture_collection
-                .find(query)
-                .sort([
-                    (sort_by, sort_direction),
-                    ("created_at", DESCENDING)  # fallback sort
-                ])
-                .skip(skip)
-                .limit(limit)
-            )
+            # -------------------------
+            # AGGREGATION PIPELINE
+            # -------------------------
+            pipeline = [
+                {
+                    "$match": query
+                },
 
-            furniture_list = list(cursor)
+                # Create unified price field for sorting
+                {
+                    "$addFields": {
+                        "sort_price": {
+                            "$cond": [
+                                {"$eq": [type_filter, "sale"]},
+                                "$price",
+                                {
+                                    "$cond": [
+                                        {"$eq": [type_filter, "rent"]},
+                                        "$rent_price",
+                                        {"$ifNull": ["$price", "$rent_price"]}
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+
+            # -------------------------
+            # SORT FIELD DECISION
+            # -------------------------
+            if sort_by in ["price", "rent_price"]:
+                sort_field = "sort_price"
+            else:
+                sort_field = sort_by
+
+            # -------------------------
+            # SORT + PAGINATION
+            # -------------------------
+            pipeline.extend([
+                {
+                    "$sort": {
+                        sort_field: sort_direction,
+                        "created_at": -1  # fallback sort
+                    }
+                },
+                {"$skip": skip},
+                {"$limit": limit}
+            ])
+
+            # -------------------------
+            # EXECUTE QUERY
+            # -------------------------
+            furniture_list = list(furniture_collection.aggregate(pipeline))
 
             # -------------------------
             # FORMAT RESPONSE
