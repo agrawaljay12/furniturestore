@@ -151,18 +151,20 @@ class Furniture(BaseModel):
             pipeline.append({
                 "$addFields": {
                     "price_num": {
-                        "$cond": [
-                            {"$ifNull": ["$price", False]},
-                            {"$toDouble": "$price"},
-                            0
-                        ]
+                        "$convert": {
+                            "input": { "$trim": { "input": "$price" } },
+                            "to": "double",
+                            "onError": 0,
+                            "onNull": 0
+                        }
                     },
                     "rent_price_num": {
-                        "$cond": [
-                            {"$ifNull": ["$rent_price", False]},
-                            {"$toDouble": "$rent_price"},
-                            0
-                        ]
+                        "$convert": {
+                            "input": { "$trim": { "input": "$rent_price" } },
+                            "to": "double",
+                            "onError": 0,
+                            "onNull": 0
+                        }
                     }
                 }
             })
