@@ -67,6 +67,7 @@ function ListFurniture(): React.ReactElement {
   const [limit] = useState<number>(10);
   const [search, setSearch] = useState<string>('');
   const [total, setTotal] = useState(0);
+  const totalPages = Math.ceil(total / limit);
   
 
   const fetchProduct = async () => {
@@ -78,20 +79,14 @@ function ListFurniture(): React.ReactElement {
     const { sort_by, sort_order } = getSortParams();
 
     const response = await fetch(
-      `https://furnspace.onrender.com/api/v1/furniture/list/${userid}?page=${page}&limit=${limit}&search=${search}&sort_by=${sort_by}&sort_order=${sort_order}`
+    `https://furnspace.onrender.com/api/v1/furniture/list/${userid}?page=${page}&limit=${limit}&search=${search}&sort_by=${sort_by}&sort_order=${sort_order}&type=${activeTab}`
     );
 
     const data = await response.json();
 
     if (data?.data) {
-      const filteredFurniture = data.data.filter(
-        (furniture: Furniture) =>
-          (furniture.is_for_sale || furniture.is_for_rent) &&
-          furniture.status === "approved"
-      );
-
-      setFurnitureList(filteredFurniture);
-      setTotal(data.total); 
+      setFurnitureList(data.data);
+      setTotal(data.pagination.total);
       setError("");
     }
 
@@ -192,7 +187,7 @@ function ListFurniture(): React.ReactElement {
     }, 500);
 
     return () => clearTimeout(delay);
-  }, [page, search, sortOption]);
+  }, [page, search, sortOption, activeTab]);
 
   const logFurnitureImageData = (furniture: Furniture | null) => {
     if (!furniture) return;
@@ -914,25 +909,28 @@ function ListFurniture(): React.ReactElement {
               <p className="text-center text-gray-500">No furniture found.</p>
             )}
           </section>
-          <div className="flex justify-center gap-4 mt-6">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-              className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-            >
-              Prev
-            </button>
+          <div className="flex justify-center items-center gap-4 mt-6">
+              <button
+                disabled={page === 1}
+                onClick={() => setPage((prev) => prev - 1)}
+                className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+              >
+                Prev
+              </button>
 
-            <span>Page {page}</span>
+              <span>
+                Page {page} of {totalPages}
+              </span>
 
-            <button
-              disabled={page * limit >= total}
-              onClick={() => setPage((prev) => prev + 1)}
-              className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+              <button
+                disabled={page === totalPages}
+                onClick={() => setPage((prev) => prev + 1)}
+                className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+
+            </div>
           </main>
         <AdminFooter />
       </div>

@@ -192,7 +192,11 @@ async def list_furniture(
     page: int = Query(1),
     search: str = Query(""),
     sort_by: str = Query("created_at"),
-    sort_order: str = Query("desc")
+    sort_order: str = Query("desc"),
+    
+    # ✅ NEW
+    status: str = Query("approved"),
+    type: str = Query("all")  # sale | rent | all
 ):
     try:
         if not user_id:
@@ -206,24 +210,22 @@ async def list_furniture(
             "page": page,
             "search": search,
             "sort_by": sort_by,
-            "sort_order": sort_order
+            "sort_order": sort_order,
+            "status": status,   # ✅ pass to service
+            "type": type        # ✅ pass to service
         }
 
         result = Furniture.get_furniture(user_id, query_param)
 
-        return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content={
-                "status": 200,
-                "status_message": "OK",
-                "data": result["data"],
-                "pagination": result["pagination"]
-            }
-        )
+        return {
+            "status": 200,
+            "status_message": "OK",
+            "data": result["data"],
+            "pagination": result["pagination"]
+        }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
+        raise HTTPException(status_code=500, detail=str(e))    
     
 # Request Type : POST
 # Path : https://furnspace.onrender.com/api/v1/furniture/update-furniture

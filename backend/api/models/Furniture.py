@@ -73,8 +73,7 @@ class Furniture(BaseModel):
             )
         
     @staticmethod
-    def get_furniture(user_id: str,query_param:dict) -> List[Dict]:
-        """ Retrieves all furniture for a particular user from the collection. """
+    def get_furniture(user_id: str, query_param: dict) -> Dict:
         try:
             limit = int(query_param.get("limit", 10))
             page = int(query_param.get("page", 1))
@@ -82,25 +81,45 @@ class Furniture(BaseModel):
             sort_by = query_param.get("sort_by", "created_at")
             sort_order = query_param.get("sort_order", "desc")
 
+            # ✅ NEW filters
+            status_filter = query_param.get("status", "approved")
+            type_filter = query_param.get("type", "all")
 
-            # Build the query
+            # -------------------------
+            # ✅ BASE QUERY
+            # -------------------------
+            query = {
+                "created_by": user_id,
+                "status": status_filter  # ✅ filter approved here
+            }
 
-            query = {"created_by": user_id}
+            # -------------------------
+            # ✅ TYPE FILTER (IMPORTANT)
+            # -------------------------
+            if type_filter == "sale":
+                query["is_for_sale"] = True
+            elif type_filter == "rent":
+                query["is_for_rent"] = True
+            # if "all" → no extra condition
 
-            # sort direction
-            if sort_order == "asc":
-                sort_direction = ASCENDING
-            else:
-                sort_direction = DESCENDING
-
+            # -------------------------
+            # ✅ SEARCH FILTER
+            # -------------------------
             if search:
                 query["$or"] = [
                     {"title": {"$regex": search, "$options": "i"}},
                     {"description": {"$regex": search, "$options": "i"}},
                     {"category": {"$regex": search, "$options": "i"}}
                 ]
-            
-            # pagination logic
+
+            # -------------------------
+            # ✅ SORT
+            # -------------------------
+            sort_direction = ASCENDING if sort_order == "asc" else DESCENDING
+
+            # -------------------------
+            # ✅ PAGINATION
+            # -------------------------
             page = max(page, 1)
             skip = (page - 1) * limit
 
@@ -116,6 +135,9 @@ class Furniture(BaseModel):
 
             furniture_list = list(furniture_cursor)
 
+            # -------------------------
+            # ✅ FORMAT RESPONSE
+            # -------------------------
             for furniture in furniture_list:
                 furniture["_id"] = str(furniture["_id"])
                 if isinstance(furniture.get("created_at"), datetime):
@@ -137,6 +159,7 @@ class Furniture(BaseModel):
                 detail=str(e)
             )
         
+
     @staticmethod
     def update_furniture(
         user_id: str,
