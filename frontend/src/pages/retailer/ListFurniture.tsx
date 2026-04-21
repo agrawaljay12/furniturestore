@@ -181,17 +181,13 @@ function ListFurniture(): React.ReactElement {
     }
   };
 
-  // useEffect(() => {
-  //   const delay = setTimeout(() => {
-  //     fetchProduct();
-  //   }, 500);
-
-  //   return () => clearTimeout(delay);
-  // }, [page, search, sortOption, activeTab]);
-
   useEffect(() => {
-    fetchProduct();
-  }, [page, search, sortOption]);
+    const delay = setTimeout(() => {
+      fetchProduct();
+    }, 500);
+
+    return () => clearTimeout(delay);
+  }, [page, search, sortOption, activeTab]);
 
   const logFurnitureImageData = (furniture: Furniture | null) => {
     if (!furniture) return;
@@ -413,18 +409,18 @@ const handleDelete = async (furnitureId: string) => {
     setIsReviewsModalOpen(false);
   };
 
-  // const groupedFurniture = furnitureList.reduce((acc, furniture) => {
-  //   if (!acc[furniture.title]) {
-  //     acc[furniture.title] = { forSale: [], forRent: [] };
-  //   }
-  //   if (furniture.is_for_sale) {
-  //     acc[furniture.title].forSale.push(furniture);
-  //   }
-  //   if (furniture.is_for_rent) {
-  //     acc[furniture.title].forRent.push(furniture);
-  //   }
-  //   return acc;
-  // }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
+  const groupedFurniture = furnitureList.reduce((acc, furniture) => {
+    if (!acc[furniture.title]) {
+      acc[furniture.title] = { forSale: [], forRent: [] };
+    }
+    if (furniture.is_for_sale) {
+      acc[furniture.title].forSale.push(furniture);
+    }
+    if (furniture.is_for_rent) {
+      acc[furniture.title].forRent.push(furniture);
+    }
+    return acc;
+  }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
 
   const getSortParams = () => {
   switch (sortOption) {
@@ -445,6 +441,98 @@ const handleDelete = async (furnitureId: string) => {
   }
 };
 
+  const renderFurnitureCard = (furniture: Furniture, type: 'sale' | 'rent') => {
+    return (
+      <div
+        key={furniture._id}
+        className={`relative overflow-hidden border-0 bg-white p-6 mb-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
+      >
+        <div className={`absolute top-0 right-0 p-2 rounded-bl-lg text-white text-xs font-bold ${
+          type === 'sale' 
+            ? 'bg-gradient-to-r from-blue-600 to-blue-500' 
+            : 'bg-gradient-to-r from-orange-600 to-orange-500'
+        }`}>
+          {type === 'sale' ? 'FOR SALE' : 'FOR RENT'}
+        </div>
+        
+        <div className={`absolute inset-x-0 top-0 h-1 ${
+          type === 'sale' 
+            ? 'bg-gradient-to-r from-blue-600 to-teal-500' 
+            : 'bg-gradient-to-r from-orange-600 to-amber-500'
+        }`}></div>
+        
+        <h3 className="text-2xl font-bold text-slate-800 mb-3 mt-2">{furniture.title}</h3>
+        
+        <div className="grid grid-cols-2 gap-3 mb-2">
+          <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
+            <span className="font-semibold text-slate-500 block text-xs">CATEGORY</span>
+            {furniture.category}
+          </p>
+          <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
+            <span className="font-semibold text-slate-500 block text-xs">CONDITION</span>
+            {furniture.condition}
+          </p>
+          {type === 'sale' ? (
+            <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
+              <span className="font-semibold text-slate-500 block text-xs">PRICE</span>
+              <span className="text-blue-600 font-bold">${furniture.price}</span>
+            </p>
+          ) : (
+            <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
+              <span className="font-semibold text-slate-500 block text-xs">RENT</span>
+              <span className="text-orange-600 font-bold">${furniture.rent_price}/day</span>
+            </p>
+          )}
+          <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
+            <span className="font-semibold text-slate-500 block text-xs">LOCATION</span>
+            {furniture.location}
+          </p>
+        </div>
+        
+        <div className="h-48 mb-4 overflow-hidden rounded-lg group relative">
+          {furniture.images && furniture.images.length > 0 ? (
+            <img
+              src={furniture.images[0]}
+              alt={furniture.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          ) : (
+            furniture.image && (
+              <img
+                src={furniture.image}
+                alt={furniture.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+            )
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
+        </div>
+        
+        <div className="flex justify-between mt-4">
+          <button
+            className={`px-4 py-2 rounded-lg text-white font-medium shadow-md flex items-center justify-center transition-all duration-300 ${
+              type === 'sale' 
+                ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600' 
+                : 'bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600'
+            }`}
+            onClick={() => handlePreview(furniture)}
+          >
+            <FiEye className="h-5 w-5 mr-2" />
+            Manage
+          </button>
+          <div className="flex space-x-2">
+            <button
+              className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center"
+              onClick={() => handleDelete(furniture._id)}
+            >
+              <FiTrash2 className="h-5 w-5 mr-2" />
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderUnifiedFurnitureCard = (furniture: Furniture) => {
     return (
@@ -754,17 +842,68 @@ const handleDelete = async (furnitureId: string) => {
               </div>
             </div>
 
-            {furnitureList.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {furnitureList
-                  .filter((item) => {
-                    if (activeTab === 'sale') return item.is_for_sale;
-                    if (activeTab === 'rent') return item.is_for_rent;
-                    return true;
-                  })
-                  .map((furniture) =>
-                    renderUnifiedFurnitureCard(furniture)
-                  )}
+            {Object.keys(groupedFurniture).length > 0 ? (
+              <div className="space-y-12">
+                {Object.keys(groupedFurniture).map((category) => {
+                  const categoryItems = [
+                    ...groupedFurniture[category].forSale,
+                    ...groupedFurniture[category].forRent
+                  ];
+                  const titleToShow = categoryItems.length > 0 ? categoryItems[0].title.split(' ')[0] : category;
+                  
+                  const combinedItems = new Map();
+                  
+                  groupedFurniture[category].forSale.forEach(item => {
+                    combinedItems.set(item._id, item);
+                  });
+                  
+                  groupedFurniture[category].forRent.forEach(item => {
+                    if (!combinedItems.has(item._id)) {
+                      combinedItems.set(item._id, item);
+                    }
+                  });
+                  
+                  const combinedItemsList = Array.from(combinedItems.values());
+                  const sortedCombinedItems = combinedItemsList;
+                  const sortedSaleItems = groupedFurniture[category].forSale;
+                  const sortedRentItems = groupedFurniture[category].forRent;
+                  
+                  return (
+                    <div key={category} className="bg-white p-6 rounded-lg shadow-md">
+                      <h3 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-300">{titleToShow}</h3>
+                      
+                      {activeTab === 'all' && sortedCombinedItems.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {sortedCombinedItems.map((furniture) => renderUnifiedFurnitureCard(furniture))}
+                        </div>
+                      )}
+                      
+                      {activeTab === 'all' && sortedCombinedItems.length === 0 && (
+                        <p className="text-center text-gray-500 py-4">No furniture available in this category.</p>
+                      )}
+                      
+                      {activeTab === 'sale' && sortedSaleItems.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {sortedSaleItems.map((furniture) => renderFurnitureCard(furniture, 'sale'))}
+                        </div>
+                      )}
+                      
+                      {activeTab === 'sale' && sortedSaleItems.length === 0 && (
+                        <p className="text-center text-gray-500 py-4">No furniture available for sale in this category.</p>
+                      )}
+
+                      {activeTab === 'rent' && sortedRentItems.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {sortedRentItems.map((furniture) => renderFurnitureCard(furniture, 'rent'))}
+                        </div>
+                      )}
+                      
+                      {activeTab === 'rent' && sortedRentItems.length === 0 && (
+                        <p className="text-center text-gray-500 py-4">No furniture available for rent in this category.</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-center text-gray-500">No furniture found.</p>
