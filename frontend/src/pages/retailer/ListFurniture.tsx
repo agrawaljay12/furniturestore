@@ -54,7 +54,6 @@ function ListFurniture(): React.ReactElement {
   const [file, setFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<'sale' | 'rent' | 'all'>('sale');
   
-
   const [sortOption, setSortOption] = useState<string>('default');
 
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -68,6 +67,7 @@ function ListFurniture(): React.ReactElement {
   const [search, setSearch] = useState<string>('');
   const [total, setTotal] = useState(0);
   const totalPages = Math.ceil(total / limit);
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
   
 
   const fetchProduct = async () => {
@@ -79,7 +79,7 @@ function ListFurniture(): React.ReactElement {
     const { sort_by, sort_order } = getSortParams();
 
     const response = await fetch(
-    `https://furnspace.onrender.com/api/v1/furniture/list/${userid}?page=${page}&limit=${limit}&search=${search}&sort_by=${sort_by}&sort_order=${sort_order}&type=${activeTab}`
+      `https://furnspace.onrender.com/api/v1/furniture/list/${userid}?page=${page}&limit=${limit}&search=${debouncedSearch}&sort_by=${sort_by}&sort_order=${sort_order}&type=${activeTab}`
     );
 
     const data = await response.json();
@@ -182,12 +182,21 @@ function ListFurniture(): React.ReactElement {
   };
 
   useEffect(() => {
-    const delay = setTimeout(() => {
-      fetchProduct();
+    fetchProduct();
+  }, [page, search, sortOption, activeTab]);
+
+  // reset to first page on search, sort, or tab change
+  useEffect(() => {
+    setPage(1);
+  }, [search, sortOption, activeTab]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
     }, 500);
 
-    return () => clearTimeout(delay);
-  }, [page, search, sortOption, activeTab]);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const logFurnitureImageData = (furniture: Furniture | null) => {
     if (!furniture) return;
@@ -423,24 +432,42 @@ const handleDelete = async (furnitureId: string) => {
   }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
 
   const getSortParams = () => {
-  switch (sortOption) {
-    case 'priceAsc':
-      return { sort_by: 'price', sort_order: 'asc' };
-    case 'priceDesc':
-      return { sort_by: 'price', sort_order: 'desc' };
-    case 'nameAsc':
-      return { sort_by: 'title', sort_order: 'asc' };
-    case 'nameDesc':
-      return { sort_by: 'title', sort_order: 'desc' };
-    case 'newest':
-      return { sort_by: 'created_at', sort_order: 'desc' };
-    case 'oldest':
-      return { sort_by: 'created_at', sort_order: 'asc' };
-    default:
-      return { sort_by: 'created_at', sort_order: 'desc' };
-  }
-};
+    switch (sortOption) {
+      
+      // TITLE
+      case "title_asc":
+        return { sort_by: "title", sort_order: "asc" };
+      case "title_desc":
+        return { sort_by: "title", sort_order: "desc" };
 
+      // CATEGORY
+      case "category_asc":
+        return { sort_by: "category", sort_order: "asc" };
+      case "category_desc":
+        return { sort_by: "category", sort_order: "desc" };
+
+      // PRICE
+      case "price_asc":
+        return { sort_by: "price", sort_order: "asc" };
+      case "price_desc":
+        return { sort_by: "price", sort_order: "desc" };
+
+         // RENT PRICE
+      case "rent_asc":
+        return { sort_by: "rent_price", sort_order: "asc" };
+      case "rent_desc":
+        return { sort_by: "rent_price", sort_order: "desc" };
+
+      // DATE
+      case "date_asc":
+        return { sort_by: "created_at", sort_order: "asc" };
+      case "date_desc":
+        return { sort_by: "created_at", sort_order: "desc" };
+
+      default:
+        return { sort_by: "created_at", sort_order: "desc" };
+    }
+  };
   const renderFurnitureCard = (furniture: Furniture, type: 'sale' | 'rent') => {
     return (
       <div
@@ -783,13 +810,16 @@ const handleDelete = async (furnitureId: string) => {
                       value={sortOption}
                       onChange={(e) => setSortOption(e.target.value)}
                     >
-                      <option value="default">Sort By</option>
-                      <option value="priceAsc">Price: Low to High</option>
-                      <option value="priceDesc">Price: High to Low</option>
-                      <option value="nameAsc">Name: A to Z</option>
-                      <option value="nameDesc">Name: Z to A</option>
-                      <option value="newest">Newest First</option>
-                      <option value="oldest">Oldest First</option>
+                      <option value="date_desc">Newest</option>
+                      <option value="date_asc">Oldest</option>
+                      <option value="title_asc">Title A-Z</option>
+                      <option value="title_desc">Title Z-A</option>
+                      <option value="category_asc">Category A-Z</option>
+                      <option value="category_desc">Category Z-A</option>
+                      <option value="price_asc">Price Low → High</option>
+                      <option value="price_desc">Price High → Low</option>
+                      <option value="rent_asc">Rent Low → High</option>
+                      <option value="rent_desc">Rent High → Low</option>
                     </select>
                   </div>
                 </div>

@@ -72,83 +72,139 @@ class Furniture(BaseModel):
             )
         
     @staticmethod
-    def get_furniture(user_id: str, query_param: dict) -> Dict:
+    def get_furniture(user_id: str, query_param: dict):
         try:
-            limit = int(query_param.get("limit", 10))
-            page = int(query_param.get("page", 1))
-            search = query_param.get("search", "")
-            sort_by = query_param.get("sort_by", "created_at")
-            sort_order = query_param.get("sort_order", "desc")
+            # -------------------------
+            # ✅ PAGINATION
+            # -------------------------
+            limit = max(int(query_param.get("limit", 10)), 1)
+            page = max(int(query_param.get("page", 1)), 1)
+            skip = (page - 1) * limit
 
+            # -------------------------
+            # ✅ FILTERS
+            # -------------------------
+            search = query_param.get("search", "").strip()
             status_filter = query_param.get("status", "approved")
             type_filter = query_param.get("type", "all")
 
+            # -------------------------
+            # ✅ SORT
+            # -------------------------
+            allowed_sort_fields = [
+                "title",
+                "category",
+                "created_at",
+                "price",
+                "rent_price"
+            ]
 
-            # ALLOWED SORT FIELDS
-            allowed_sort_fields = ["title", "category", "created_at", "created_by"]
-
+            sort_by = query_param.get("sort_by", "created_at")
             if sort_by not in allowed_sort_fields:
                 sort_by = "created_at"
 
+            sort_order = query_param.get("sort_order", "desc")
+            sort_direction = ASCENDING if sort_order == "asc" else DESCENDING
 
             # -------------------------
-            # BASE QUERY
+            # ✅ BASE QUERY
             # -------------------------
             query = {
                 "created_by": user_id,
-                "status": status_filter  # ✅ filter approved here
+                "status": status_filter
             }
 
             # -------------------------
-            # ✅ TYPE FILTER (IMPORTANT)
+            # ✅ TYPE FILTER
             # -------------------------
             if type_filter == "sale":
                 query["is_for_sale"] = True
             elif type_filter == "rent":
                 query["is_for_rent"] = True
-            # if "all" → no extra condition
 
             # -------------------------
-            # ✅ SEARCH FILTER
+            # ✅ SEARCH
             # -------------------------
             if search:
                 query["$or"] = [
                     {"title": {"$regex": search, "$options": "i"}},
-                    {"description": {"$regex": search, "$options": "i"}},
-                    {"category": {"$regex": search, "$options": "i"}}
+                    {"category": {"$regex": search, "$options": "i"}},
+                    {"description": {"$regex": search, "$options": "i"}}
                 ]
 
             # -------------------------
-            # ✅ SORT
+            # ✅ COUNT (before aggregation)
             # -------------------------
-            sort_direction = ASCENDING if sort_order == "asc" else DESCENDING
-
-            # -------------------------
-            # ✅ PAGINATION
-            # -------------------------
-            page = max(page, 1)
-            skip = (page - 1) * limit
-
             total_count = furniture_collection.count_documents(query)
 
-            furniture_cursor = (
-                furniture_collection
-                .find(query)
-                .sort(sort_by, sort_direction)
-                .skip(skip)
-                .limit(limit)
-            )
+            # -------------------------
+            # ✅ AGGREGATION PIPELINE
+            # -------------------------
+            pipeline = []
 
-            furniture_list = list(furniture_cursor)
+            # MATCH
+            pipeline.append({
+                "$match": query
+            })
+
+            # CONVERT STRING → NUMBER
+            pipeline.append({
+                "$addFields": {
+                    "price_num": {
+                        "$cond": [
+                            {"$ifNull": ["$price", False]},
+                            {"$toDouble": "$price"},
+                            0
+                        ]
+                    },
+                    "rent_price_num": {
+                        "$cond": [
+                            {"$ifNull": ["$rent_price", False]},
+                            {"$toDouble": "$rent_price"},
+                            0
+                        ]
+                    }
+                }
+            })
+
+            # SORT FIELD MAP
+            sort_field_map = {
+                "price": "price_num",
+                "rent_price": "rent_price_num",
+                "title": "title",
+                "category": "category",
+                "created_at": "created_at"
+            }
+
+            actual_sort_field = sort_field_map.get(sort_by, "created_at")
+
+            # SORT
+            pipeline.append({
+                "$sort": {
+                    actual_sort_field: sort_direction,
+                    "created_at": -1  # secondary sort (stable)
+                }
+            })
+
+            # PAGINATION
+            pipeline.append({"$skip": skip})
+            pipeline.append({"$limit": limit})
+
+            # EXECUTE
+            furniture_list = list(furniture_collection.aggregate(pipeline))
 
             # -------------------------
             # ✅ FORMAT RESPONSE
             # -------------------------
-            for furniture in furniture_list:
-                furniture["_id"] = str(furniture["_id"])
-                if isinstance(furniture.get("created_at"), datetime):
-                    furniture["created_at"] = furniture["created_at"].isoformat()
+            for item in furniture_list:
+                item["_id"] = str(item["_id"])
 
+                if isinstance(item.get("created_at"), datetime):
+                    item["created_at"] = item["created_at"].isoformat()
+
+            # -------------------------
+            # ✅ FINAL RESPONSE
+            # -------------------------
             return {
                 "data": furniture_list,
                 "pagination": {
@@ -160,11 +216,8 @@ class Furniture(BaseModel):
             }
 
         except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(e)
-            )
-        
+            raise HTTPException(status_code=500, detail=str(e))
+                
 
     @staticmethod
     def update_furniture(
