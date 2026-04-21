@@ -80,12 +80,19 @@ class Furniture(BaseModel):
             sort_by = query_param.get("sort_by", "created_at")
             sort_order = query_param.get("sort_order", "desc")
 
-            # ✅ NEW filters
             status_filter = query_param.get("status", "approved")
             type_filter = query_param.get("type", "all")
 
+
+            # ALLOWED SORT FIELDS
+            allowed_sort_fields = ["title", "category", "created_at", "created_by"]
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+
             # -------------------------
-            # ✅ BASE QUERY
+            # BASE QUERY
             # -------------------------
             query = {
                 "created_by": user_id,
