@@ -1,8 +1,5 @@
-from regex import search
-from requests import Request
-
 from api.db import furniture_collection
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 from fastapi import HTTPException, UploadFile, status
 from datetime import datetime
 from typing import Optional,List,Dict
@@ -16,7 +13,9 @@ from email.mime.multipart import MIMEMultipart
 from api.models.FileUpload import FileUpload
 import os
 from dotenv import load_dotenv
+
 load_dotenv () 
+
 class Furniture(BaseModel):
     title: str
     description: str
