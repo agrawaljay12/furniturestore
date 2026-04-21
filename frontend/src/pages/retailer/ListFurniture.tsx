@@ -68,7 +68,6 @@ function ListFurniture(): React.ReactElement {
   const [search, setSearch] = useState<string>('');
   const [total, setTotal] = useState(0);
   const totalPages = Math.ceil(total / limit);
-  const [debouncedSearch, setDebouncedSearch] = useState(search);
   
 
   const fetchProduct = async () => {
@@ -183,16 +182,12 @@ function ListFurniture(): React.ReactElement {
   };
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
+    const delay = setTimeout(() => {
+      fetchProduct();
     }, 500);
 
-    return () => clearTimeout(handler);
-  }, [search]);
-
-  useEffect(() => {
-    fetchProduct();
-  }, [page, debouncedSearch, sortOption, activeTab]);
+    return () => clearTimeout(delay);
+  }, [page, search, sortOption, activeTab]);
 
   const logFurnitureImageData = (furniture: Furniture | null) => {
     if (!furniture) return;
@@ -427,31 +422,23 @@ function ListFurniture(): React.ReactElement {
     return acc;
   }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
 
-  const sortItems = (items: Furniture[]) => {
-  const { sort_by, sort_order } = getSortParams();
-
-  return [...items].sort((a, b) => {
-    let valA: any = a[sort_by as keyof Furniture];
-    let valB: any = b[sort_by as keyof Furniture];
-
-    if (sort_by === "price" || sort_by === "rent_price") {
-      valA = Number(valA || 0);
-      valB = Number(valB || 0);
-    }
-
-    if (sort_by === "created_at") {
-      valA = new Date(valA).getTime();
-      valB = new Date(valB).getTime();
-    }
-
-    if (typeof valA === "string") {
-      return sort_order === "asc"
-        ? valA.localeCompare(valB)
-        : valB.localeCompare(valA);
-    }
-
-    return sort_order === "asc" ? valA - valB : valB - valA;
-  });
+  const getSortParams = () => {
+  switch (sortOption) {
+    case 'priceAsc':
+      return { sort_by: 'price', sort_order: 'asc' };
+    case 'priceDesc':
+      return { sort_by: 'price', sort_order: 'desc' };
+    case 'nameAsc':
+      return { sort_by: 'title', sort_order: 'asc' };
+    case 'nameDesc':
+      return { sort_by: 'title', sort_order: 'desc' };
+    case 'newest':
+      return { sort_by: 'created_at', sort_order: 'desc' };
+    case 'oldest':
+      return { sort_by: 'created_at', sort_order: 'asc' };
+    default:
+      return { sort_by: 'created_at', sort_order: 'desc' };
+  }
 };
 
   const renderFurnitureCard = (furniture: Furniture, type: 'sale' | 'rent') => {
@@ -877,9 +864,9 @@ function ListFurniture(): React.ReactElement {
                   });
                   
                   const combinedItemsList = Array.from(combinedItems.values());
-                  const sortedCombinedItems = sortItems(combinedItemsList);
-                  const sortedSaleItems = sortItems(groupedFurniture[category].forSale);
-                  const sortedRentItems = sortItems(groupedFurniture[category].forRent);
+                  const sortedCombinedItems = combinedItemsList;
+                  const sortedSaleItems = groupedFurniture[category].forSale;
+                  const sortedRentItems = groupedFurniture[category].forRent;
                   
                   return (
                     <div key={category} className="bg-white p-6 rounded-lg shadow-md">
@@ -1262,7 +1249,3 @@ function ListFurniture(): React.ReactElement {
 }
 
 export default ListFurniture;
-
-function getSortParams(): { sort_by: any; sort_order: any; } {
-  throw new Error('Function not implemented.');
-}
