@@ -151,24 +151,41 @@ class Furniture(BaseModel):
             pipeline.append({
                 "$addFields": {
                     "price_num": {
-                        "$convert": {
-                            "input": { "$trim": { "input": "$price" } },
-                            "to": "double",
-                            "onError": 0,
-                            "onNull": 0
-                        }
+                        "$cond": [
+                            { "$or": [
+                                { "$eq": ["$price", ""] },
+                                { "$eq": ["$price", None] }
+                            ]},
+                            0,
+                            {
+                                "$convert": {
+                                    "input": "$price",
+                                    "to": "double",
+                                    "onError": 0,
+                                    "onNull": 0
+                                }
+                            }
+                        ]
                     },
                     "rent_price_num": {
-                        "$convert": {
-                            "input": { "$trim": { "input": "$rent_price" } },
-                            "to": "double",
-                            "onError": 0,
-                            "onNull": 0
-                        }
+                        "$cond": [
+                            { "$or": [
+                                { "$eq": ["$rent_price", ""] },
+                                { "$eq": ["$rent_price", None] }
+                            ]},
+                            0,
+                            {
+                                "$convert": {
+                                    "input": "$rent_price",
+                                    "to": "double",
+                                    "onError": 0,
+                                    "onNull": 0
+                                }
+                            }
+                        ]
                     }
                 }
             })
-
             # SORT FIELD MAP
             sort_field_map = {
                 "price": "price_num",
