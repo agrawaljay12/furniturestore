@@ -62,37 +62,44 @@ function ListFurniture(): React.ReactElement {
   const [isReviewsModalOpen, setIsReviewsModalOpen] = useState<boolean>(false);
   const [userDetails, setUserDetails] = useState<Record<string, { first_name: string, last_name: string }>>({}); 
 
+
+  const [page, setPage] = useState<number>(1);
+  const [limit] = useState<number>(10);
+  const [search, setSearch] = useState<string>('');
+  const [total, setTotal] = useState(0);
+  
+
   const fetchProduct = async () => {
-    const headersList = { "Content-Type": "application/json" };
+  try {
+    setError("Loading furniture...");
 
-    try {
-      setError("Loading furniture..."); // Show loading state
+    let userid = localStorage.getItem('token');
 
-      let userid = localStorage.getItem('token');  
-      const response = await fetch(
-        `https://furnspace.onrender.com/api/v1/furniture/list/${userid}`,
-        {
-          method: "GET",
-          headers: headersList
-        }
+    const { sort_by, sort_order } = getSortParams();
+
+    const response = await fetch(
+      `https://furnspace.onrender.com/api/v1/furniture/list/${userid}?page=${page}&limit=${limit}&search=${search}&sort_by=${sort_by}&sort_order=${sort_order}`
+    );
+
+    const data = await response.json();
+
+    if (data?.data) {
+      const filteredFurniture = data.data.filter(
+        (furniture: Furniture) =>
+          (furniture.is_for_sale || furniture.is_for_rent) &&
+          furniture.status === "approved"
       );
 
-      const data = await response.json();
-
-      if (data && data.data) {
-        const filteredFurniture = data.data.filter(
-          (furniture: Furniture) => 
-            (furniture.is_for_sale || furniture.is_for_rent) && 
-            furniture.status === "approved"
-        );
-        setFurnitureList(filteredFurniture); // Only approved furniture for sale or rent
-        setError(""); // Clear error/loading message
-      }
-    } catch (error) {
-      console.error("Error fetching furniture:", error);
-      setError("Failed to fetch furniture data. Please check your connection or API.");
+      setFurnitureList(filteredFurniture);
+      setTotal(data.total); 
+      setError("");
     }
-  };
+
+  } catch (error) {
+    console.error(error);
+    setError("Failed to fetch furniture");
+  }
+};
 
   const fetchUserDetails = async (userId: string) => {
     // Return from cache if available
@@ -180,8 +187,12 @@ function ListFurniture(): React.ReactElement {
   };
 
   useEffect(() => {
-    fetchProduct();
-  }, []);
+    const delay = setTimeout(() => {
+      fetchProduct();
+    }, 500);
+
+    return () => clearTimeout(delay);
+  }, [page, search, sortOption]);
 
   const logFurnitureImageData = (furniture: Furniture | null) => {
     if (!furniture) return;
@@ -416,28 +427,24 @@ function ListFurniture(): React.ReactElement {
     return acc;
   }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
 
-  const sortFurniture = (items: Furniture[]) => {
-    if (sortOption === 'default') return items;
-    
-    return [...items].sort((a, b) => {
-      switch (sortOption) {
-        case 'priceAsc':
-          return a.price - b.price;
-        case 'priceDesc':
-          return b.price - a.price;
-        case 'nameAsc':
-          return a.title.localeCompare(b.title);
-        case 'nameDesc':
-          return b.title.localeCompare(a.title);
-        case 'newest':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case 'oldest':
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        default:
-          return 0;
-      }
-    });
-  };
+  const getSortParams = () => {
+  switch (sortOption) {
+    case 'priceAsc':
+      return { sort_by: 'price', sort_order: 'asc' };
+    case 'priceDesc':
+      return { sort_by: 'price', sort_order: 'desc' };
+    case 'nameAsc':
+      return { sort_by: 'title', sort_order: 'asc' };
+    case 'nameDesc':
+      return { sort_by: 'title', sort_order: 'desc' };
+    case 'newest':
+      return { sort_by: 'created_at', sort_order: 'desc' };
+    case 'oldest':
+      return { sort_by: 'created_at', sort_order: 'asc' };
+    default:
+      return { sort_by: 'created_at', sort_order: 'desc' };
+  }
+};
 
   const renderFurnitureCard = (furniture: Furniture, type: 'sale' | 'rent') => {
     return (
@@ -766,6 +773,16 @@ function ListFurniture(): React.ReactElement {
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FiFilter className="text-gray-400" />
                     </div>
+                    <input
+                      type="text"
+                      placeholder="Search furniture..."
+                      value={search}
+                      onChange={(e) => {
+                        setSearch(e.target.value);
+                        setPage(1); // reset page
+                      }}
+                      className="px-4 py-2 border rounded-lg"
+                    />
                     <select
                       className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       value={sortOption}
@@ -852,9 +869,9 @@ function ListFurniture(): React.ReactElement {
                   });
                   
                   const combinedItemsList = Array.from(combinedItems.values());
-                  const sortedCombinedItems = sortFurniture(combinedItemsList);
-                  const sortedSaleItems = sortFurniture(groupedFurniture[category].forSale);
-                  const sortedRentItems = sortFurniture(groupedFurniture[category].forRent);
+                  const sortedCombinedItems = combinedItemsList;
+                  const sortedSaleItems = groupedFurniture[category].forSale;
+                  const sortedRentItems = groupedFurniture[category].forRent;
                   
                   return (
                     <div key={category} className="bg-white p-6 rounded-lg shadow-md">
@@ -897,7 +914,26 @@ function ListFurniture(): React.ReactElement {
               <p className="text-center text-gray-500">No furniture found.</p>
             )}
           </section>
-        </main>
+          <div className="flex justify-center gap-4 mt-6">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+            >
+              Prev
+            </button>
+
+            <span>Page {page}</span>
+
+            <button
+              disabled={page * limit >= total}
+              onClick={() => setPage((prev) => prev + 1)}
+              className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+          </main>
         <AdminFooter />
       </div>
       
