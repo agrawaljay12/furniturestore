@@ -431,43 +431,37 @@ const handleDelete = async (furnitureId: string) => {
     return acc;
   }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
 
-  const getSortParams = () => {
-    switch (sortOption) {
-      
-      // TITLE
-      case "title_asc":
-        return { sort_by: "title", sort_order: "asc" };
-      case "title_desc":
-        return { sort_by: "title", sort_order: "desc" };
+ const getSortParams = () => {
+  switch (sortOption) {
+    case "title_asc":
+      return { sort_by: "title", sort_order: "asc" };
+    case "title_desc":
+      return { sort_by: "title", sort_order: "desc" };
 
-      // CATEGORY
-      case "category_asc":
-        return { sort_by: "category", sort_order: "asc" };
-      case "category_desc":
-        return { sort_by: "category", sort_order: "desc" };
+    case "category_asc":
+      return { sort_by: "category", sort_order: "asc" };
+    case "category_desc":
+      return { sort_by: "category", sort_order: "desc" };
 
-      // PRICE
-      case "price_asc":
-        return { sort_by: "price", sort_order: "asc" };
-      case "price_desc":
-        return { sort_by: "price", sort_order: "desc" };
+    case "price_asc":
+      return { sort_by: "price", sort_order: "asc" };
+    case "price_desc":
+      return { sort_by: "price", sort_order: "desc" };
 
-         // RENT PRICE
-      case "rent_asc":
-        return { sort_by: "rent_price", sort_order: "asc" };
-      case "rent_desc":
-        return { sort_by: "rent_price", sort_order: "desc" };
+    case "rent_asc":
+      return { sort_by: "rent_price", sort_order: "asc" };
+    case "rent_desc":
+      return { sort_by: "rent_price", sort_order: "desc" };
 
-      // DATE
-      case "date_asc":
-        return { sort_by: "created_at", sort_order: "asc" };
-      case "date_desc":
-        return { sort_by: "created_at", sort_order: "desc" };
+    case "date_asc":
+      return { sort_by: "created_at", sort_order: "asc" };
+    case "date_desc":
+      return { sort_by: "created_at", sort_order: "desc" };
 
-      default:
-        return { sort_by: "created_at", sort_order: "desc" };
-    }
-  };
+    default:
+      return { sort_by: "created_at", sort_order: "desc" };
+  }
+};
   const renderFurnitureCard = (furniture: Furniture, type: 'sale' | 'rent') => {
     return (
       <div
@@ -810,16 +804,20 @@ const handleDelete = async (furnitureId: string) => {
                       value={sortOption}
                       onChange={(e) => setSortOption(e.target.value)}
                     >
-                      <option value="date_desc">Newest</option>
-                      <option value="date_asc">Oldest</option>
-                      <option value="title_asc">Title A-Z</option>
-                      <option value="title_desc">Title Z-A</option>
-                      <option value="category_asc">Category A-Z</option>
-                      <option value="category_desc">Category Z-A</option>
-                      <option value="price_asc">Price Low → High</option>
-                      <option value="price_desc">Price High → Low</option>
-                      <option value="rent_asc">Rent Low → High</option>
-                      <option value="rent_desc">Rent High → Low</option>
+                        <option value="date_desc">Newest</option>
+                        <option value="date_asc">Oldest</option>
+
+                        <option value="title_asc">Title A-Z</option>
+                        <option value="title_desc">Title Z-A</option>
+
+                        <option value="category_asc">Category A-Z</option>
+                        <option value="category_desc">Category Z-A</option>
+
+                        <option value="price_asc">Price Low → High</option>
+                        <option value="price_desc">Price High → Low</option>
+
+                        <option value="rent_asc">Rent Low → High</option>
+                        <option value="rent_desc">Rent High → Low</option>
                     </select>
                   </div>
                 </div>

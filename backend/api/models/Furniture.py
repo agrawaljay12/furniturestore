@@ -72,28 +72,34 @@ class Furniture(BaseModel):
             )
         
     @staticmethod
-    def get_furniture(user_id: str, query_param: dict) -> Dict:
+    def get_furniture(user_id: str, query_param: dict):
         try:
             # -------------------------
-            # ✅ PAGINATION
+            # PAGINATION
             # -------------------------
             limit = max(int(query_param.get("limit", 10)), 1)
             page = max(int(query_param.get("page", 1)), 1)
             skip = (page - 1) * limit
 
             # -------------------------
-            # ✅ FILTERS
+            # FILTERS
             # -------------------------
             search = query_param.get("search", "").strip()
             status_filter = query_param.get("status", "approved")
             type_filter = query_param.get("type", "all")
 
             # -------------------------
-            # ✅ SORT VALIDATION
+            # SORTING
             # -------------------------
-            allowed_sort_fields = ["title", "category", "created_at","price","rent_price"]
-            sort_by = query_param.get("sort_by", "created_at")
+            allowed_sort_fields = [
+                "title",
+                "category",
+                "created_at",
+                "price",
+                "rent_price"
+            ]
 
+            sort_by = query_param.get("sort_by", "created_at")
             if sort_by not in allowed_sort_fields:
                 sort_by = "created_at"
 
@@ -101,7 +107,7 @@ class Furniture(BaseModel):
             sort_direction = ASCENDING if sort_order == "asc" else DESCENDING
 
             # -------------------------
-            # ✅ BASE QUERY
+            # BASE QUERY
             # -------------------------
             query = {
                 "created_by": user_id,
@@ -109,7 +115,7 @@ class Furniture(BaseModel):
             }
 
             # -------------------------
-            # ✅ TYPE FILTER
+            # TYPE FILTER
             # -------------------------
             if type_filter == "sale":
                 query["is_for_sale"] = True
@@ -117,7 +123,7 @@ class Furniture(BaseModel):
                 query["is_for_rent"] = True
 
             # -------------------------
-            # ✅ SEARCH
+            # SEARCH
             # -------------------------
             if search:
                 query["$or"] = [
@@ -127,14 +133,23 @@ class Furniture(BaseModel):
                 ]
 
             # -------------------------
-            # ✅ DB QUERY
+            # HANDLE NULL VALUES
+            # -------------------------
+            if sort_by in ["price", "rent_price"]:
+                query[sort_by] = {"$exists": True}
+
+            # -------------------------
+            # DATABASE QUERY
             # -------------------------
             total_count = furniture_collection.count_documents(query)
 
             cursor = (
                 furniture_collection
                 .find(query)
-                .sort(sort_by, sort_direction)
+                .sort([
+                    (sort_by, sort_direction),
+                    ("created_at", DESCENDING)  # fallback sort
+                ])
                 .skip(skip)
                 .limit(limit)
             )
@@ -142,7 +157,7 @@ class Furniture(BaseModel):
             furniture_list = list(cursor)
 
             # -------------------------
-            # ✅ FORMAT RESPONSE
+            # FORMAT RESPONSE
             # -------------------------
             for item in furniture_list:
                 item["_id"] = str(item["_id"])
@@ -162,7 +177,7 @@ class Furniture(BaseModel):
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-            
+                
 
     @staticmethod
     def update_furniture(
