@@ -51,8 +51,9 @@ function ListFurniture(): React.ReactElement {
 
   const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
   const [imageURL, setImageURL] = useState<string>('');
-  const [file, setFile] = useState<File | null>(null);
+  const [, setFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<'sale' | 'rent' | 'all'>('sale');
+  const [files, setFiles] = useState<File[]>([]);
   
   const [sortOption, setSortOption] = useState<string>('default');
 
@@ -271,11 +272,20 @@ function ListFurniture(): React.ReactElement {
       // -------------------------
       // IMAGE REPLACEMENT
       // -------------------------
-      if (file) {
-        formData.append("files", file);
-
-        // send index separately
-        formData.append("replace_indexes", String(editingImageIndex ?? 0));
+      if (files && files.length > 0) {
+        if (editingImageIndex !== null) {
+          // ✅ REPLACE MODE (ONLY ONE FILE)
+          formData.append("files", files[0]); // ONLY first file
+          formData.append(
+            "replace_indexes",
+            JSON.stringify([editingImageIndex])
+          );
+        } else {
+          // ✅ ADD MODE (MULTIPLE FILES ALLOWED)
+          files.forEach((f) => {
+            formData.append("files", f);
+          });
+        }
       }
 
       try {
@@ -288,6 +298,7 @@ function ListFurniture(): React.ReactElement {
         setEditMode(false);
         setSelectedFurniture(null);
         setFile(null);
+        setFiles([]);
         setImageURL('');
         setEditingImageIndex(null);
         setError('');
@@ -300,109 +311,110 @@ function ListFurniture(): React.ReactElement {
       }
     };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    const newFile = event.target.files?.[0];
-    if (!newFile) return;
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
 
-    // Validate file type and size
+    if (editingImageIndex !== null && selectedFiles.length > 1) {
+      setError("You can only select one image when replacing.");
+      return;
+    }
+
     const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
 
-    if (!validTypes.includes(newFile.type)) {
-      setError('Please upload a valid image file (JPEG, PNG, WebP)');
-      return;
+    for (const f of selectedFiles) {
+      if (!validTypes.includes(f.type)) {
+        setError('Invalid file type');
+        return;
+      }
+      if (f.size > maxSize) {
+        setError('File too large (max 5MB)');
+        return;
+      }
     }
 
-    if (newFile.size > maxSize) {
-      setError('Image size should be less than 5MB');
-      return;
-    }
+    setFiles(selectedFiles);
 
-    setFile(newFile);
+    // preview first image
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setImageURL(reader.result as string);
-      setError(''); // Clear any previous errors
-    };
-    reader.readAsDataURL(newFile);
+    reader.onloadend = () => setImageURL(reader.result as string);
+    reader.readAsDataURL(selectedFiles[0]);
   };
 
   const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => {
-  e?.stopPropagation();
+    e?.stopPropagation();
 
-  if (!selectedFurniture) return;
+    if (!selectedFurniture) return;
 
-  if (selectedFurniture.images && selectedFurniture.images.length > 0) {
-    // multiple images
-    setEditingImageIndex(index ?? 0);
-  } else {
-    // single image
-    setEditingImageIndex(0);
-  }
+    if (selectedFurniture.images && selectedFurniture.images.length > 0) {
+      // multiple images
+      setEditingImageIndex(index ?? 0);
+    } else {
+      // single image
+      setEditingImageIndex(0);
+    }
 
-  setFile(null);
-  setImageURL('');
+    setFile(null);
+    setImageURL('');
 
-  fileInputRef.current?.click();
+    fileInputRef.current?.click();
   };
 
   const handleAddNewImage = (e: React.MouseEvent) => {
-  e.stopPropagation();
+    e.stopPropagation();
 
-  if (!selectedFurniture) return;
+    // ✅ IMPORTANT: set NULL (not index)
+    setEditingImageIndex(null);
 
-  const newIndex = selectedFurniture.images?.length || 0;
+    setFile(null);
+    setImageURL('');
 
-  setEditingImageIndex(newIndex); // append position
-  setFile(null);
-  setImageURL('');
-
-  fileInputRef.current?.click();
-};
-  
-const handleDelete = async (furnitureId: string) => {
-    const isConfirmed = window.confirm("Are you sure you want to delete this furniture?");
-    if (!isConfirmed) {
-        return;
-    }
-
-    const headersList = {
-        "Content-Type": "application/json"
-    };
-
-    const bodyContent = JSON.stringify({});
-
-    try {
-        const response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/delete/${furnitureId}`, {
-            method: "POST",
-            body: bodyContent,
-            headers: headersList
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            // Update the furniture list
-            setFurnitureList((prevList) => prevList.filter((item) => item._id !== furnitureId));
-            
-            // If the deleted item was selected, close the preview
-            if (selectedFurniture && selectedFurniture._id === furnitureId) {
-                closePreview();
-            }
-            
-            alert("Furniture deleted successfully!");
-            
-            // Refresh the furniture list to ensure UI is in sync
-            setTimeout(() => {
-                fetchProduct();
-            }, 300);
-        } else {
-            alert(data.message || "Failed to delete furniture.");
-        }
-    } catch (error) {
-        alert("An error occurred. Please try again later.");
-    }
+    fileInputRef.current?.click();
   };
+  
+  const handleDelete = async (furnitureId: string) => {
+      const isConfirmed = window.confirm("Are you sure you want to delete this furniture?");
+      if (!isConfirmed) {
+          return;
+      }
+
+      const headersList = {
+          "Content-Type": "application/json"
+      };
+
+      const bodyContent = JSON.stringify({});
+
+      try {
+          const response = await fetch(`https://furnspace.onrender.com/api/v1/furniture/delete/${furnitureId}`, {
+              method: "POST",
+              body: bodyContent,
+              headers: headersList
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+              // Update the furniture list
+              setFurnitureList((prevList) => prevList.filter((item) => item._id !== furnitureId));
+              
+              // If the deleted item was selected, close the preview
+              if (selectedFurniture && selectedFurniture._id === furnitureId) {
+                  closePreview();
+              }
+              
+              alert("Furniture deleted successfully!");
+              
+              // Refresh the furniture list to ensure UI is in sync
+              setTimeout(() => {
+                  fetchProduct();
+              }, 300);
+          } else {
+              alert(data.message || "Failed to delete furniture.");
+          }
+      } catch (error) {
+          alert("An error occurred. Please try again later.");
+      }
+    };
 
   const handleAddDiscount = (furnitureId: string) => {
     navigate(`/retailer/add-discount/${furnitureId}`);
@@ -748,6 +760,7 @@ const handleDelete = async (furnitureId: string) => {
         
         <input
           type="file"
+          multiple={editingImageIndex === null} // ✅ KEY FIX
           ref={fileInputRef}
           accept="image/*"
           onChange={handleFileChange}

@@ -213,8 +213,7 @@ class Furniture(BaseModel):
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-                
-
+                  
     @staticmethod
     def update_furniture(
         user_id: str,
@@ -224,6 +223,9 @@ class Furniture(BaseModel):
         replace_indexes: Optional[List[int]] = None
     ) -> bool:
         try:
+            # -------------------------
+            # FETCH CURRENT DATA
+            # -------------------------
             current = furniture_collection.find_one({
                 "_id": ObjectId(furniture_id),
                 "created_by": user_id
@@ -232,177 +234,117 @@ class Furniture(BaseModel):
             if not current:
                 return False
 
-            existing_images = current.get("images", [])
+            # -------------------------
+            # PREPARE EXISTING IMAGES
+            # -------------------------
+            existing_images = current.get("images", []).copy()
+
+            if not existing_images and current.get("image"):
+                existing_images = [current["image"]]
+
+            images_updated = False
 
             # -------------------------
-            # IMAGE HANDLING (FIXED)
+            # IMAGE HANDLING (STRICT)
             # -------------------------
             if files:
                 new_image_urls = []
 
                 for file in files:
-                    unique_filename = FileUpload().save(file)
+                    unique_filename = FileUpload().upload_image(file)
                     file_url = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
                     new_image_urls.append(file_url)
 
-                # ✅ CASE 1: Replace specific indexes
-                if replace_indexes and len(replace_indexes) == len(new_image_urls):
+                #  STRICT REPLACE MODE
+                if replace_indexes is not None:
+
+                    if not isinstance(replace_indexes, list):
+                        raise HTTPException(status_code=400, detail="replace_indexes must be a list")
+
+                    # 🔒 enforce EXACT match
+                    if len(replace_indexes) != len(new_image_urls):
+                        raise HTTPException(
+                            status_code=400,
+                            detail="replace_indexes and files count must match"
+                        )
 
                     for i, index in enumerate(replace_indexes):
-                        if index < len(existing_images):
-                            existing_images[index] = new_image_urls[i]
-                        else:
-                            # if index invalid → append
-                            existing_images.append(new_image_urls[i])
 
-                # ✅ CASE 2: Single existing image → replace
-                elif len(existing_images) == 1 and len(new_image_urls) == 1:
-                    existing_images = new_image_urls
+                        if not isinstance(index, int) or index < 0:
+                            raise HTTPException(
+                                status_code=400,
+                                detail=f"Invalid index: {index}"
+                            )
 
-                # ✅ CASE 3: Append new images (DEFAULT SAFE BEHAVIOR)
+                        if index >= len(existing_images):
+                            raise HTTPException(
+                                status_code=400,
+                                detail=f"Index out of range: {index}"
+                            )
+
+                        # REPLACE ONLY
+                        existing_images[index] = new_image_urls[i]
+
+                    images_updated = True
+
+                # STRICT ADD MODE
                 else:
                     existing_images.extend(new_image_urls)
+                    images_updated = True
+            # -------------------------
+            # PREPARE FINAL UPDATE DATA
+            # -------------------------
+            final_update = {}
+
+            allowed_fields = [
+                "title",
+                "description",
+                "price",
+                "category",
+                "rent_price",
+                "availability_status",
+                "condition",
+                "dimensions",
+                "location",
+                "is_for_sale",
+                "is_for_rent",
+                "brand"
+            ]
+
+            for key in allowed_fields:
+                if key in update_data:
+                    final_update[key] = update_data[key]
+
+            # ✅ Only update images if changed
+            if images_updated:
+                final_update["images"] = existing_images
+                final_update["image"] = None
+
+            # Timestamp
+            final_update["updated_at"] = datetime.utcnow()
+
+            if not final_update:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No valid fields or images provided for update"
+                )
 
             # -------------------------
-            # UPDATE DATA
+            # DATABASE UPDATE
             # -------------------------
-            update_data["images"] = existing_images
-            update_data["updated_at"] = datetime.utcnow()
-
-            furniture_collection.update_one(
+            result = furniture_collection.update_one(
                 {"_id": ObjectId(furniture_id)},
-                {"$set": update_data}
+                {"$set": final_update}
             )
 
-            return True
+            return result.modified_count > 0
+
+        except HTTPException:
+            raise
 
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))@staticmethod
-        
-def update_furniture(
-    user_id: str,
-    furniture_id: str,
-    update_data: dict,
-    files: Optional[List[UploadFile]] = None,
-    replace_indexes: Optional[List[int]] = None
-) -> bool:
-    try:
-        current = furniture_collection.find_one({
-            "_id": ObjectId(furniture_id),
-            "created_by": user_id
-        })
+            raise HTTPException(status_code=500, detail=str(e))
 
-        if not current:
-            return False
-
-        existing_images = current.get("images", [])
-
-        # -------------------------
-        # IMAGE HANDLING (FIXED)
-        # -------------------------
-        if files:
-            new_image_urls = []
-
-            for file in files:
-                unique_filename = FileUpload().save(file)
-                file_url = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
-                new_image_urls.append(file_url)
-
-            # ✅ CASE 1: Replace specific indexes
-            if replace_indexes and len(replace_indexes) == len(new_image_urls):
-
-                for i, index in enumerate(replace_indexes):
-                    if index < len(existing_images):
-                        existing_images[index] = new_image_urls[i]
-                    else:
-                        # if index invalid → append
-                        existing_images.append(new_image_urls[i])
-
-            # ✅ CASE 2: Single existing image → replace
-            elif len(existing_images) == 1 and len(new_image_urls) == 1:
-                existing_images = new_image_urls
-
-            # ✅ CASE 3: Append new images (DEFAULT SAFE BEHAVIOR)
-            else:
-                existing_images.extend(new_image_urls)
-
-        # -------------------------
-        # UPDATE DATA
-        # -------------------------
-        update_data["images"] = existing_images
-        update_data["updated_at"] = datetime.utcnow()
-
-        furniture_collection.update_one(
-            {"_id": ObjectId(furniture_id)},
-            {"$set": update_data}
-        )
-
-        return True
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))@staticmethod
-def update_furniture(
-    user_id: str,
-    furniture_id: str,
-    update_data: dict,
-    files: Optional[List[UploadFile]] = None,
-    replace_indexes: Optional[List[int]] = None
-) -> bool:
-    try:
-        current = furniture_collection.find_one({
-            "_id": ObjectId(furniture_id),
-            "created_by": user_id
-        })
-
-        if not current:
-            return False
-
-        existing_images = current.get("images", [])
-
-        # -------------------------
-        # IMAGE HANDLING (FIXED)
-        # -------------------------
-        if files:
-            new_image_urls = []
-
-            for file in files:
-                unique_filename = FileUpload().save(file)
-                file_url = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
-                new_image_urls.append(file_url)
-
-            # ✅ CASE 1: Replace specific indexes
-            if replace_indexes and len(replace_indexes) == len(new_image_urls):
-
-                for i, index in enumerate(replace_indexes):
-                    if index < len(existing_images):
-                        existing_images[index] = new_image_urls[i]
-                    else:
-                        # if index invalid → append
-                        existing_images.append(new_image_urls[i])
-
-            # ✅ CASE 2: Single existing image → replace
-            elif len(existing_images) == 1 and len(new_image_urls) == 1:
-                existing_images = new_image_urls
-
-            # ✅ CASE 3: Append new images (DEFAULT SAFE BEHAVIOR)
-            else:
-                existing_images.extend(new_image_urls)
-
-        # -------------------------
-        # UPDATE DATA
-        # -------------------------
-        update_data["images"] = existing_images
-        update_data["updated_at"] = datetime.utcnow()
-
-        furniture_collection.update_one(
-            {"_id": ObjectId(furniture_id)},
-            {"$set": update_data}
-        )
-
-        return True
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
             
     @staticmethod
     def search_furniture_by_category_or_title(category: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:

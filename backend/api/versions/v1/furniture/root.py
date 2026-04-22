@@ -1,12 +1,12 @@
 from datetime import datetime
 from fastapi import APIRouter,HTTPException, status, Request, UploadFile ,File,Depends
-from fastapi.params import Query
+from fastapi.params import Form, Query
 from pydantic import ValidationError
 from fastapi.responses import JSONResponse
 from api.models.Furniture import Furniture
 from api.models.FileUpload import FileUpload
 from pymongo import ASCENDING, DESCENDING
-from typing import List ,Union  
+from typing import List, Optional ,Union  
 import json
 from bson import ObjectId    
 router = APIRouter()
@@ -231,7 +231,7 @@ async def list_furniture(
 # Path : https://furnspace.onrender.com/api/v1/furniture/update-furniture
 # Default Port : 10007
 @router.post("/update-furniture", response_description="Update Furniture")
-async def update_furniture(request: Request, files: List[UploadFile] = File(None)):
+async def update_furniture(request: Request, files: List[UploadFile] = File(None), replace_indexes: Optional[str] = Form(None) ):
     try:
         # Check content type to handle both JSON and form data
         content_type = request.headers.get("content-type", "")
@@ -257,6 +257,18 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
             if 'data' in data and isinstance(data['data'], str):
                 data = json.loads(data['data'])
             print(f"Parsed JSON data: {data}")
+
+
+        # -------------------------
+        # PARSE replace_indexes
+        # -------------------------
+        if replace_indexes:
+            try:
+                replace_indexes = json.loads(replace_indexes)
+            except:
+                raise HTTPException(400, "Invalid replace_indexes format")
+        else:
+            replace_indexes = None
 
         # Basic validation for required fields
         required_fields = ['furniture_id', 'title', 'category']
@@ -363,7 +375,7 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
 
         # Call update method
         print(f"Calling update_furniture with data: {update_data}")
-        result = Furniture.update_furniture(created_by, furniture_id, update_data, files)
+        result = Furniture.update_furniture(created_by, furniture_id, update_data, files,replace_indexes)
 
         # Return response
         return JSONResponse(
