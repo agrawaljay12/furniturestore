@@ -251,8 +251,8 @@ class Furniture(BaseModel):
                 new_image_urls = []
 
                 for file in files:
-                    unique_filename = FileUpload().upload_image(file)
-                    file_url = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
+                    file_url = FileUpload().upload_image(file)
+                    # file_url = f"https://furnspace.onrender.com/static/uploads/{unique_filename}"
                     new_image_urls.append(file_url)
 
                 #  STRICT REPLACE MODE
