@@ -141,24 +141,16 @@ class Furniture(BaseModel):
             # AGGREGATION PIPELINE
             # -------------------------
             pipeline = [
-                {
-                    "$match": query
-                },
+                {"$match": query},
 
-                # Create unified price field for sorting
+                # ✅ FIXED: Safe numeric sorting field
                 {
                     "$addFields": {
                         "sort_price": {
                             "$cond": [
-                                {"$eq": [type_filter, "sale"]},
-                                "$price",
-                                {
-                                    "$cond": [
-                                        {"$eq": [type_filter, "rent"]},
-                                        "$rent_price",
-                                        {"$ifNull": ["$price", "$rent_price"]}
-                                    ]
-                                }
+                                {"$eq": ["$is_for_sale", True]},
+                                {"$ifNull": ["$price", 0]},
+                                {"$ifNull": ["$rent_price", 0]}
                             ]
                         }
                     }
@@ -166,7 +158,7 @@ class Furniture(BaseModel):
             ]
 
             # -------------------------
-            # SORT FIELD DECISION
+            # SORT FIELD
             # -------------------------
             if sort_by in ["price", "rent_price"]:
                 sort_field = "sort_price"
@@ -180,7 +172,7 @@ class Furniture(BaseModel):
                 {
                     "$sort": {
                         sort_field: sort_direction,
-                        "created_at": -1  # fallback sort
+                        "created_at": -1
                     }
                 },
                 {"$skip": skip},
@@ -359,7 +351,6 @@ class Furniture(BaseModel):
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-
             
     @staticmethod
     def search_furniture_by_category_or_title(category: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:

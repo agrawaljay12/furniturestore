@@ -201,11 +201,11 @@ function ListFurniture(): React.ReactElement {
   }, [search]);
 
   const getDisplayImage = (furniture: Furniture) => {
-    if (furniture.images && furniture.images.length > 0) {
-      return furniture.images[0];
-    }
-    return furniture.image || "";
-  };
+  if (furniture.images && furniture.images.length > 0) {
+    return furniture.images[0];
+  }
+  return furniture.image || "";
+};
 
   const logFurnitureImageData = (furniture: Furniture | null) => {
     if (!furniture) return;
