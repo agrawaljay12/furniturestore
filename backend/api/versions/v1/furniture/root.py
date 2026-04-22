@@ -384,7 +384,8 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
                 "status": 200,
                 "status_message": "OK",
                 "data": {
-                    "message": "Furniture updated successfully"
+                    "message": "Furniture updated successfully",
+                    "furniture": result
                 }
             }
         )
