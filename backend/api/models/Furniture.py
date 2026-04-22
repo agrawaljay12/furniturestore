@@ -283,7 +283,7 @@ class Furniture(BaseModel):
                             )
 
                         # REPLACE ONLY
-                        existing_images[index] = new_image_urls[i]
+                    existing_images[index] = new_image_urls[i] or existing_images[index]
 
                     images_updated = True
 
@@ -315,10 +315,25 @@ class Furniture(BaseModel):
                 if key in update_data:
                     final_update[key] = update_data[key]
 
-            # ✅ Only update images if changed
+            # Only update images if changed
             if images_updated:
-                final_update["images"] = existing_images
-                final_update["image"] = None
+
+                # Remove empty / None values
+                existing_images = [img for img in existing_images if img]
+
+                if len(existing_images) == 0:
+                    final_update["image"] = None
+                    final_update["images"] = []
+
+                elif len(existing_images) == 1:
+                    # SINGLE IMAGE → store in `image`
+                    final_update["image"] = existing_images[0]
+                    final_update["images"] = []
+
+                else:
+                    # MULTIPLE IMAGES → store in `images`
+                    final_update["image"] = None
+            final_update["images"] = existing_images
 
             # Timestamp
             final_update["updated_at"] = datetime.utcnow()
