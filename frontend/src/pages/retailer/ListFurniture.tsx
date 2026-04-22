@@ -200,6 +200,13 @@ function ListFurniture(): React.ReactElement {
     return () => clearTimeout(timer);
   }, [search]);
 
+  const getDisplayImage = (furniture: Furniture) => {
+    if (furniture.images && furniture.images.length > 0) {
+      return furniture.images[0];
+    }
+    return furniture.image || "";
+  };
+
   const logFurnitureImageData = (furniture: Furniture | null) => {
     if (!furniture) return;
     
@@ -548,7 +555,7 @@ function ListFurniture(): React.ReactElement {
         <div className="h-48 mb-4 overflow-hidden rounded-lg group relative">
           {furniture.images && furniture.images.length > 0 ? (
             <img
-              src={furniture.images[0]}
+              src={getDisplayImage(furniture)}
               alt={furniture.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
@@ -646,7 +653,7 @@ function ListFurniture(): React.ReactElement {
         <div className="h-48 mb-4 overflow-hidden rounded-lg group relative">
           {furniture.images && furniture.images.length > 0 ? (
             <img
-              src={furniture.images[0]}
+              src={getDisplayImage(furniture)}
               alt={furniture.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />

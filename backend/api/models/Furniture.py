@@ -283,7 +283,7 @@ class Furniture(BaseModel):
                             )
 
                         # REPLACE ONLY
-                    existing_images[index] = new_image_urls[i] or existing_images[index]
+                        existing_images[index] = new_image_urls[i] or existing_images[index]
 
                     images_updated = True
 
@@ -333,7 +333,7 @@ class Furniture(BaseModel):
                 else:
                     # MULTIPLE IMAGES → store in `images`
                     final_update["image"] = None
-            final_update["images"] = existing_images
+                    final_update["images"] = existing_images
 
             # Timestamp
             final_update["updated_at"] = datetime.utcnow()
