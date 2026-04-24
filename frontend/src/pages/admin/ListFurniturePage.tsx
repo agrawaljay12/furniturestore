@@ -124,6 +124,17 @@ function ListFurniture(): React.ReactElement {
     setEditMode(false);
   };
 
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        setSuccess('');
+        setError('');
+      }, 3000); // ⏱ 3 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [success, error]);
+
   const handleSave = async () => {
 
       if (!selectedFurniture) return;
