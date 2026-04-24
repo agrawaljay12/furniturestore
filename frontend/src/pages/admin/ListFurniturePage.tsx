@@ -172,16 +172,28 @@ function ListFurniture(): React.ReactElement {
       // IMAGE REPLACEMENT
       // -------------------------
       if (files.length > 0) {
+
         if (editingImageIndex !== null) {
           // ✅ REPLACE MODE
-          formData.append("files", files[0]);
-          formData.append("replace_indexes", JSON.stringify([editingImageIndex]));
-        } else {
-          // ✅ ADD MODE
-          files.forEach((f) => {
-            formData.append("files", f);
-          });
-        }
+
+            if (files.length !== 1) {
+              alert("Only one file allowed when replacing an image");
+              return;
+            }
+
+            // Send as ARRAY format (important)
+            formData.append("files", files[0]);
+
+            // Backend expects LIST → send properly
+            formData.append("replace_indexes", JSON.stringify([editingImageIndex]));
+
+          } else {
+            // ✅ ADD MODE (multiple allowed)
+
+            files.forEach((file) => {
+              formData.append("files", file);
+            });
+          }
       }
 
       try {
@@ -210,32 +222,49 @@ function ListFurniture(): React.ReactElement {
       }
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    const selectedFile = event.target.files?.[0];
-    if (!selectedFile) return;
+ const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
 
-    setFiles([selectedFile]); // ✅ FIX
+    if (editingImageIndex !== null && selectedFiles.length > 1) {
+      setError("You can only select one image when replacing.");
+      return;
+    }
 
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024;
+
+    for (const f of selectedFiles) {
+      if (!validTypes.includes(f.type)) {
+        setError('Invalid file type');
+        return;
+      }
+      if (f.size > maxSize) {
+        setError('File too large (max 5MB)');
+        return;
+      }
+    }
+
+    setFiles(selectedFiles);
+
+    // preview first image
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setImageURL(reader.result as string);
-    };
-    reader.readAsDataURL(selectedFile);
+    reader.onloadend = () => setImageURL(reader.result as string);
+    reader.readAsDataURL(selectedFiles[0]);
   };
 
 
-  const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => {
+const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => {
     e?.stopPropagation();
 
-    if (index !== null) {
-      // ✅ REPLACE MODE
-      setEditingImageIndex(index);
+    if (!selectedFurniture) return;
+
+    if (selectedFurniture.images && selectedFurniture.images.length > 0) {
+      // multiple images
+      setEditingImageIndex(index ?? 0);
     } else {
-      // ✅ SINGLE IMAGE CASE
+      // single image
       setEditingImageIndex(0);
     }
-
-    setFiles([]);
     setImageURL('');
 
     fileInputRef.current?.click();
@@ -571,6 +600,7 @@ function ListFurniture(): React.ReactElement {
           type="file"
           ref={fileInputRef}
           accept="image/*"
+          multiple   // ✅ IMPORTANT
           onChange={handleFileChange}
           className="hidden"
         />

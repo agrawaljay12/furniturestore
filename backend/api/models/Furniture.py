@@ -208,7 +208,6 @@ class Furniture(BaseModel):
                   
     @staticmethod
     def update_furniture(
-        user_id: str,
         furniture_id: str,
         update_data: dict,
         files: Optional[List[UploadFile]] = None,
@@ -219,8 +218,7 @@ class Furniture(BaseModel):
             # FETCH CURRENT DATA
             # -------------------------
             current = furniture_collection.find_one({
-                "_id": ObjectId(furniture_id),
-                "created_by": user_id
+                "_id": ObjectId(furniture_id)
             })
 
             if not current:
