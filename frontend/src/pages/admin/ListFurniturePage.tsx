@@ -122,6 +122,11 @@ function ListFurniture(): React.ReactElement {
   const closePreview = () => {
     setSelectedFurniture(null);
     setEditMode(false);
+
+    // ✅ clear messages
+    setError('');
+    setSuccess('');
+    setLoadingMsg('');
   };
 
   useEffect(() => {
