@@ -36,14 +36,16 @@ function ListFurniture(): React.ReactElement {
   const page = 1; // Initialize the page variable
   // const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
   const [imageURL, setImageURL] = useState<string>('');
-  const [file, setFile] = useState<File | null>(null);
+  // const [file, setFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<'sale' | 'rent' | 'all'>('sale');
   // const [isImagePreviewOpen, setIsImagePreviewOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [groupedFurnitureState, setGroupedFurnitureState] = useState<Record<string, { forSale: Furniture[], forRent: Furniture[] }>>({});
   const [selectedTitleFilter, setSelectedTitleFilter] = useState<string>('all');
 
-  const [replaceIndexes, setReplaceIndexes] = useState<number[]>([]);
+  // const [replaceIndexes, setReplaceIndexes] = useState<number[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
+  const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
 
   const fetchProduct = async () => {
     setIsLoading(true);
@@ -119,23 +121,24 @@ function ListFurniture(): React.ReactElement {
   };
 
   const handleSave = async () => {
-    if (!selectedFurniture) return;
 
-    const user_id = localStorage.getItem('token');
+      if (!selectedFurniture) return;
 
-    if (!user_id) {
-      setError("User ID is not found in local storage.");
-      return;
-    }
+      const user_id = localStorage.getItem('token');
+      if (!user_id) {
+        setError("User ID not found");
+        return;
+      }
 
-    setIsLoading(true);
+      setError("Updating furniture...");
 
-    const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
+      const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
+      const formData = new FormData();
 
-    const formDataToSend = new FormData();
-
-    // required fields
-     const dataToSend: any = {
+      // -------------------------
+      // CLEAN DATA
+      // -------------------------
+      const dataToSend: any = {
         furniture_id: selectedFurniture._id,
         title: selectedFurniture.title,
         description: selectedFurniture.description,
@@ -155,57 +158,51 @@ function ListFurniture(): React.ReactElement {
         user_id: user_id
       };
 
-    formDataToSend.append("data", JSON.stringify(dataToSend));
-    //  Correct field (VERY IMPORTANT)
-    formDataToSend.append("data", JSON.stringify(selectedFurniture));
+      formData.append("data", JSON.stringify(dataToSend));
 
-    // File
-    if (file) {
-      formDataToSend.append("files", file);
-    }
-
-    // Replace index logic
-    if (file && replaceIndexes.length > 0) {
-      formDataToSend.append("replace_indexes", JSON.stringify(replaceIndexes));
-    }
-
-    try {
-      const response = await axios.post(url, formDataToSend, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      if (response.status === 200 && response.data.data) {
-        const updatedFurniture = response.data.data;
-
-        setSelectedFurniture(updatedFurniture);
-        setReplaceIndexes([]);
-        setFile(null);
-        setImageURL('');
-        setEditMode(false);
-
-        setFurnitureList(prev =>
-          prev.map(item =>
-            item._id === updatedFurniture._id ? updatedFurniture : item
-          )
-        );
-
-        alert("Updated successfully!");
-        setSelectedFurniture(null);
-        await fetchProduct();
+      // -------------------------
+      // IMAGE REPLACEMENT
+      // -------------------------
+      if (files.length > 0) {
+        if (editingImageIndex !== null) {
+          // ✅ REPLACE MODE
+          formData.append("files", files[0]);
+          formData.append("replace_indexes", JSON.stringify([editingImageIndex]));
+        } else {
+          // ✅ ADD MODE
+          files.forEach((f) => {
+            formData.append("files", f);
+          });
+        }
       }
-    } catch (error: any) {
-      console.error(error);
-      alert("Update failed");
-    } finally {
-      setIsLoading(false);
-    }
+
+      try {
+        await axios.post(url, formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+
+        await fetchProduct();
+
+        setEditMode(false);
+        setSelectedFurniture(null);
+        setFiles([]);
+        setImageURL('');
+        setEditingImageIndex(null);
+        setError('');
+
+        alert("Furniture updated successfully!");
+
+      } catch (error: any) {
+        console.error(error?.response?.data || error);
+        setError(error?.response?.data?.detail || "Update failed");
+      }
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
 
-    setFile(selectedFile);
+    setFiles([selectedFile]); // ✅ FIX
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -214,21 +211,19 @@ function ListFurniture(): React.ReactElement {
     reader.readAsDataURL(selectedFile);
   };
 
+
   const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => {
     e?.stopPropagation();
 
     if (index !== null) {
-      // Replace existing image
-      setReplaceIndexes([index]);
-    } else if (selectedFurniture?.images?.length) {
-      // Add new image
-      setReplaceIndexes([]);
+      // ✅ REPLACE MODE
+      setEditingImageIndex(index);
     } else {
-      // Single image case → replace it
-      setReplaceIndexes([0]);
+      // ✅ SINGLE IMAGE CASE
+      setEditingImageIndex(0);
     }
 
-    setFile(null);
+    setFiles([]);
     setImageURL('');
 
     fileInputRef.current?.click();
@@ -237,15 +232,14 @@ function ListFurniture(): React.ReactElement {
   const handleAddNewImage = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    // ADD MODE → no replace_indexes
-    setReplaceIndexes([]);
+    // ✅ ADD MODE
+    setEditingImageIndex(null);
 
-    setFile(null);
+    setFiles([]);
     setImageURL('');
 
     fileInputRef.current?.click();
   };
-
   const handleDelete = async (furnitureId: string) => {
     const isConfirmed = window.confirm("Are you sure you want to delete this furniture?");
     if (!isConfirmed) {
