@@ -177,9 +177,11 @@ function ListFurniture(): React.ReactElement {
       }
 
       try {
-        await axios.post(url, formData, {
-          headers: { "Content-Type": "multipart/form-data" }
+        const res= await axios.post(url, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
+
+        console.log("Update response:", res.data);
 
         await fetchProduct();
 
