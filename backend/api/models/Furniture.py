@@ -399,7 +399,7 @@ class Furniture(BaseModel):
 
             search = query_params.get("search", "")
             sort_by = query_params.get("sort_by", "price")
-            order = query_params.get("order", "asc")
+            order = query_params.get("order", "asc").lower()
             page = int(query_params.get("page", 1))
             limit = int(query_params.get("limit", 10))
             title = query_params.get("title", "")
@@ -412,22 +412,26 @@ class Furniture(BaseModel):
             elif listing_type == "rent":
                     query["is_for_rent"] = True
 
+            filters = []
+
             if title:
-                query["title"] = {"$regex": title.strip(), "$options": "i"}
+                filters.append({"title": {"$regex": title.strip(), "$options": "i"}})
 
             if search:
-                query["$or"] = [
-                    {"title": {"$regex": search, "$options": "i"}},
-                    {"description": {"$regex": search, "$options": "i"}},
-                    {"category": {"$regex": search, "$options": "i"}}
-                ]
+                filters.append({
+                    "$or": [
+                        {"title": {"$regex": search, "$options": "i"}},
+                        {"description": {"$regex": search, "$options": "i"}},
+                        {"category": {"$regex": search, "$options": "i"}}
+                    ]
+                })
 
             allowed_sort_fields = ["price","rent_price","created_at","title","category","description"]
             
             if sort_by not in allowed_sort_fields:
                 sort_by = "created_at"
 
-            sort_order = 1 if sort_order == "asc" else -1
+            sort_order = 1 if order == "asc" else -1
 
             skip = (page - 1) * limit
 
@@ -436,6 +440,7 @@ class Furniture(BaseModel):
             cursor = (
                 furniture_collection
                 .find(query)
+                .collation({"locale": "en", "strength": 2})  # ✅ ADD THIS
                 .sort(sort_by, sort_order)
                 .skip(skip)
                 .limit(limit)
@@ -453,9 +458,9 @@ class Furniture(BaseModel):
                     furniture["created_at"] = furniture["created_at"].isoformat()
 
                 # Safe price conversion
-                if "price" in furniture and furniture["price"] is not None:
+                if "rent_price" in furniture and furniture["rent_price"] is not None:
                     try:
-                        furniture["price"] = float(furniture["price"])
+                        furniture["rent_price"] = float(furniture["rent_price"])
                     except:
                         pass
 
