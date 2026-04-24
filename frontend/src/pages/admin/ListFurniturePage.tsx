@@ -31,7 +31,6 @@ function ListFurniture(): React.ReactElement {
   const [furnitureList, setFurnitureList] = useState<Furniture[]>([]);
   const [selectedFurniture, setSelectedFurniture] = useState<Furniture | null>(null);
   const [editMode, setEditMode] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const page = 1; // Initialize the page variable
   // const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
@@ -46,6 +45,11 @@ function ListFurniture(): React.ReactElement {
   // const [replaceIndexes, setReplaceIndexes] = useState<number[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
+
+  // State for handling messages
+  const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');   // ✅ NEW
+  const [loadingMsg, setLoadingMsg] = useState<string>(''); // ✅ OPTIONAL
 
   const fetchProduct = async () => {
     setIsLoading(true);
@@ -194,13 +198,15 @@ function ListFurniture(): React.ReactElement {
         setFiles([]);
         setImageURL('');
         setEditingImageIndex(null);
-        setError('');
-
+        setSuccess("Furniture updated successfully!");
+        setLoadingMsg('');
         alert("Furniture updated successfully!");
 
       } catch (error: any) {
         console.error(error?.response?.data || error);
         setError(error?.response?.data?.detail || "Update failed");
+        setLoadingMsg('');
+        setSuccess('');
       }
   };
 
@@ -601,8 +607,9 @@ function ListFurniture(): React.ReactElement {
                 <FiList className="mr-2 text-indigo-600 dark:text-indigo-400" />
                 Furniture Management
               </h2>
+              {loadingMsg && <p className="text-blue-500 text-center">{loadingMsg}</p>}
               {error && <p className="text-rose-500 text-center">{error}</p>}
-              {isLoading && <p className="text-blue-500 text-center">Loading...</p>}
+              {success && <p className="text-green-600 text-center">{success}</p>}
             </div>
             
             <div className="mb-8">
