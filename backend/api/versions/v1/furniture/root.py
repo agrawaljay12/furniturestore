@@ -349,7 +349,8 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
             "condition": condition,
             "availability_status": availability_status,
             "dimensions": dimensions,
-            "location": location
+            "location": location,
+
         }
         
          # Add only if valid
@@ -478,11 +479,20 @@ async def list_all_furniture(request: Request):
 
         result = Furniture.get_all_furniture(query_params)
 
-        return {
-            "status": 200,
-            "status_message": "OK",
-            "data": result
-        }
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "status": 200,
+                "status_message": "OK",
+                "data": result["items"],
+                "pagination": {
+                    "total": result["total"],
+                    "page": result["page"],
+                    "limit": result["limit"],
+                    "total_pages": result["total_pages"]
+                }
+            }   
+        );
 
     except HTTPException as http_exc:
         raise http_exc

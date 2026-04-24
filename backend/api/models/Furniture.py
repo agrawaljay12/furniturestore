@@ -403,17 +403,17 @@ class Furniture(BaseModel):
             page = int(query_params.get("page", 1))
             limit = int(query_params.get("limit", 10))
             title = query_params.get("title", "")
-            listing_type = query_params.get("listing_type", "buy")
+            listing_type = query_params.get("listing_type", "all")
 
             query = {"status": "approved"}
 
             if listing_type == "buy":
-                query["is_for_sale"] = True
+                    query["is_for_sale"] = True
             elif listing_type == "rent":
-                query["is_for_rent"] = True
+                    query["is_for_rent"] = True
 
             if title:
-                query["title"] = {"$regex": title, "$options": "i"}
+                query["title"] = {"$regex": title.strip(), "$options": "i"}
 
             if search:
                 query["$or"] = [
@@ -422,9 +422,16 @@ class Furniture(BaseModel):
                     {"category": {"$regex": search, "$options": "i"}}
                 ]
 
-            sort_order = ASCENDING if order == "asc" else DESCENDING
+            allowed_sort_fields = ["price","rent_price","created_at","title","category","description"]
+            
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            sort_order = 1 if sort_order == "asc" else -1
 
             skip = (page - 1) * limit
+
+            total_count = furniture_collection.count_documents(query)
 
             cursor = (
                 furniture_collection
@@ -452,7 +459,13 @@ class Furniture(BaseModel):
                     except:
                         pass
 
-            return furniture_list
+            return {
+                "items": furniture_list,
+                "total": total_count,
+                "page": page,
+                "limit": limit,
+                "total_pages": (total_count + limit - 1) // limit
+            }
 
         except Exception as e:
             print("Furniture Service Error:", e)
