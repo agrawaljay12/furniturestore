@@ -293,7 +293,6 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
         availability_status = data.get('availability_status', 'available')
         dimensions = data.get('dimensions', '')
         location = data.get('location', 'Unknown')
-        created_by = data.get('created_by') or data.get('user_id')
               
         # Image data if present
         images = data.get('images')
@@ -340,12 +339,6 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
                     detail="Rent price is required when item is for rent"
                  )
 
-        if not created_by:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Created by/user ID cannot be empty"
-            )
-
         # Prepare update data including all fields and image context
         update_data = {
             "title": title,
@@ -356,8 +349,7 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
             "condition": condition,
             "availability_status": availability_status,
             "dimensions": dimensions,
-            "location": location,
-            "created_by": created_by,
+            "location": location
         }
         
          # Add only if valid
@@ -375,7 +367,7 @@ async def update_furniture(request: Request, files: List[UploadFile] = File(None
 
         # Call update method
         print(f"Calling update_furniture with data: {update_data}")
-        result = Furniture.update_furniture(created_by, furniture_id, update_data, files,replace_indexes)
+        result = Furniture.update_furniture(furniture_id, update_data, files,replace_indexes)
 
         # Return response
         return JSONResponse(
