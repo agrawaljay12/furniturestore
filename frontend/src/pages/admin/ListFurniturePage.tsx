@@ -122,6 +122,7 @@ function ListFurniture(): React.ReactElement {
     if (!selectedFurniture) return;
 
     const user_id = localStorage.getItem('token');
+
     if (!user_id) {
       setError("User ID is not found in local storage.");
       return;
@@ -130,12 +131,31 @@ function ListFurniture(): React.ReactElement {
     setIsLoading(true);
 
     const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
+
     const formDataToSend = new FormData();
 
     // required fields
-    formDataToSend.append("user_id", user_id);
-    formDataToSend.append("furniture_id", selectedFurniture._id);
+     const dataToSend: any = {
+        furniture_id: selectedFurniture._id,
+        title: selectedFurniture.title,
+        description: selectedFurniture.description,
+        category: selectedFurniture.category,
 
+        price: selectedFurniture.price ? Number(selectedFurniture.price) : null,
+        rent_price: selectedFurniture.rent_price ? Number(selectedFurniture.rent_price) : null,
+
+        is_for_sale: Boolean(selectedFurniture.is_for_sale),
+        is_for_rent: Boolean(selectedFurniture.is_for_rent),
+
+        condition: selectedFurniture.condition,
+        availability_status: selectedFurniture.availability_status,
+        dimensions: selectedFurniture.dimensions,
+        location: selectedFurniture.location,
+
+        user_id: user_id
+      };
+
+    formDataToSend.append("data", JSON.stringify(dataToSend));
     //  Correct field (VERY IMPORTANT)
     formDataToSend.append("data", JSON.stringify(selectedFurniture));
 
@@ -146,9 +166,7 @@ function ListFurniture(): React.ReactElement {
 
     // Replace index logic
     if (file && replaceIndexes.length > 0) {
-      replaceIndexes.forEach((index) => {
-        formDataToSend.append("replace_indexes", index.toString());
-      });
+      formDataToSend.append("replace_indexes", JSON.stringify(replaceIndexes));
     }
 
     try {

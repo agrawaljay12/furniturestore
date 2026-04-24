@@ -237,7 +237,7 @@ function ListFurniture(): React.ReactElement {
     setEditMode(false);
   };
 
-    const handleSave = async () => {
+  const handleSave = async () => {
 
       if (!selectedFurniture) return;
 
@@ -317,7 +317,7 @@ function ListFurniture(): React.ReactElement {
         console.error(error?.response?.data || error);
         setError(error?.response?.data?.detail || "Update failed");
       }
-    };
+  };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
