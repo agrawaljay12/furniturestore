@@ -34,7 +34,7 @@ function ListFurniture(): React.ReactElement {
   const [error, setError] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const page = 1; // Initialize the page variable
-  const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
+  // const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
   const [imageURL, setImageURL] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<'sale' | 'rent' | 'all'>('sale');
@@ -42,6 +42,8 @@ function ListFurniture(): React.ReactElement {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [groupedFurnitureState, setGroupedFurnitureState] = useState<Record<string, { forSale: Furniture[], forRent: Furniture[] }>>({});
   const [selectedTitleFilter, setSelectedTitleFilter] = useState<string>('all');
+
+  const [replaceIndexes, setReplaceIndexes] = useState<number[]>([]);
 
   const fetchProduct = async () => {
     setIsLoading(true);
@@ -126,143 +128,105 @@ function ListFurniture(): React.ReactElement {
     }
 
     setIsLoading(true);
-    setError("Updating furniture...");
 
     const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
-    const formDataToSend = new FormData();
-    
-    const currentImageType = selectedFurniture.images && selectedFurniture.images.length > 0 ? 'multiple' : 'single';
-    
-    const dataToSend = {
-      ...selectedFurniture,
-      user_id,
-      furniture_id: selectedFurniture._id,
-      ...(file && { editing_image_index: editingImageIndex }),
-      preserve_images: true,
-      has_new_image: !!file,
-      current_image_type: currentImageType
-    };
-    
-    console.log("Sending data to server:", dataToSend);
-    formDataToSend.append("data", JSON.stringify(dataToSend));
+    const formData = new FormData();
 
+    // ✅ REQUIRED FIELDS
+    formData.append("user_id", user_id);
+    formData.append("furniture_id", selectedFurniture._id);
+
+    // ✅ CLEAN update_data (REMOVE image fields)
+    const { image, images, ...cleanData } = selectedFurniture;
+    formData.append("update_data", JSON.stringify(cleanData));
+
+    // ✅ FILE
     if (file) {
-      formDataToSend.append("files", file);
-      console.log("Uploading file:", file.name);
+      formData.append("files", file);
+    }
+
+    // ✅ REPLACE MODE
+    if (file && replaceIndexes.length > 0) {
+      replaceIndexes.forEach((index) => {
+        formData.append("replace_indexes", index.toString());
+      });
     }
 
     try {
-      const response = await axios.post(url, formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
+      const response = await axios.post(url, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       if (response.status === 200 && response.data.data) {
         const updatedFurniture = response.data.data;
-        
-        // Update the selected furniture with the response data 
-        setSelectedFurniture(updatedFurniture);
-        
-        // First update the furniture list with the immediate update
-        setFurnitureList(prevList => {
-          const updatedList = prevList.map(item => {
-            if (item._id === updatedFurniture._id) {
-              console.log("Updating item in list:", updatedFurniture);
-              return updatedFurniture;
-            }
-            return item;
-          });
-          return updatedList;
-        });
 
-        // Reset the editing state
-        setEditMode(false);
+        setSelectedFurniture(updatedFurniture);
+        setReplaceIndexes([]);
         setFile(null);
         setImageURL('');
-        setEditingImageIndex(null);
-        setError('');
-        
-        // Show success alert
-        alert("Furniture details updated successfully!");
-        
-        // Close the preview/edit modal after successful update
+        setEditMode(false);
+
+        setFurnitureList(prev =>
+          prev.map(item =>
+            item._id === updatedFurniture._id ? updatedFurniture : item
+          )
+        );
+
+        alert("Updated successfully!");
         setSelectedFurniture(null);
-        
-        // Refresh the entire data to ensure everything is up to date
         await fetchProduct();
-      } else {
-        throw new Error(response.data.message || "Failed to update furniture details");
       }
     } catch (error: any) {
-      console.error('There was an error updating the furniture data!', error);
-      
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-      }
-      
-      setError("Failed to update furniture: " + (error.response?.data?.detail || error.message || "Unknown error"));
-      alert('Failed to update furniture. Please check the console for details.');
+      console.error(error);
+      alert("Update failed");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    const file = event.target.files?.[0];
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) return;
 
-    if (!file) {
-      return;
-    }
+    setFile(selectedFile);
 
-    setFile(file);
     const reader = new FileReader();
     reader.onloadend = () => {
       setImageURL(reader.result as string);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(selectedFile);
   };
 
   const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    
-    if (selectedFurniture?.images && selectedFurniture.images.length > 0) {
-      setEditingImageIndex(index === null ? selectedFurniture.images.length : index);
-      console.log(`Editing image at index ${index} in collection of ${selectedFurniture.images.length} images`);
-    } else if (selectedFurniture?.image) {
-      setEditingImageIndex(-1);
-      console.log('Editing single image');
+
+    if (index !== null) {
+      // Replace existing image
+      setReplaceIndexes([index]);
+    } else if (selectedFurniture?.images?.length) {
+      // Add new image
+      setReplaceIndexes([]);
     } else {
-      setEditingImageIndex(-2);
-      console.log('Adding first image');
+      // Single image case → replace it
+      setReplaceIndexes([0]);
     }
-    
+
     setFile(null);
     setImageURL('');
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+
+    fileInputRef.current?.click();
   };
 
   const handleAddNewImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (selectedFurniture?.images && selectedFurniture.images.length > 0) {
-      setEditingImageIndex(selectedFurniture.images.length);
-    } else if (selectedFurniture?.image) {
-      setEditingImageIndex(-1);
-    } else {
-      setEditingImageIndex(-2);
-    }
-    
+
+    // ADD MODE → no replace_indexes
+    setReplaceIndexes([]);
+
     setFile(null);
     setImageURL('');
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+
+    fileInputRef.current?.click();
   };
 
   const handleDelete = async (furnitureId: string) => {
