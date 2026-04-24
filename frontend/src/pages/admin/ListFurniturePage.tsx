@@ -130,30 +130,29 @@ function ListFurniture(): React.ReactElement {
     setIsLoading(true);
 
     const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
-    const formData = new FormData();
+    const formDataToSend = new FormData();
 
-    // ✅ REQUIRED FIELDS
-    formData.append("user_id", user_id);
-    formData.append("furniture_id", selectedFurniture._id);
+    // required fields
+    formDataToSend.append("user_id", user_id);
+    formDataToSend.append("furniture_id", selectedFurniture._id);
 
-    // ✅ CLEAN update_data (REMOVE image fields)
-    const { image, images, ...cleanData } = selectedFurniture;
-    formData.append("update_data", JSON.stringify(cleanData));
+    //  Correct field (VERY IMPORTANT)
+    formDataToSend.append("data", JSON.stringify(selectedFurniture));
 
-    // ✅ FILE
+    // File
     if (file) {
-      formData.append("files", file);
+      formDataToSend.append("files", file);
     }
 
-    // ✅ REPLACE MODE
+    // Replace index logic
     if (file && replaceIndexes.length > 0) {
       replaceIndexes.forEach((index) => {
-        formData.append("replace_indexes", index.toString());
+        formDataToSend.append("replace_indexes", index.toString());
       });
     }
 
     try {
-      const response = await axios.post(url, formData, {
+      const response = await axios.post(url, formDataToSend, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
