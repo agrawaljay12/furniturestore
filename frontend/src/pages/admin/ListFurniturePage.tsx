@@ -159,6 +159,10 @@ function ListFurniture(): React.ReactElement {
       };
 
       formData.append("data", JSON.stringify(dataToSend));
+      formData.append("furniture_id", selectedFurniture._id);
+
+      console.log("Data being sent:", dataToSend);
+      console.log(selectedFurniture._id);
 
       // -------------------------
       // IMAGE REPLACEMENT
