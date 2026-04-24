@@ -32,7 +32,7 @@ function ListFurniture(): React.ReactElement {
   const [selectedFurniture, setSelectedFurniture] = useState<Furniture | null>(null);
   const [editMode, setEditMode] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const page = 1; // Initialize the page variable
+
   // const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
   const [imageURL, setImageURL] = useState<string>('');
   // const [file, setFile] = useState<File | null>(null);
@@ -50,53 +50,49 @@ function ListFurniture(): React.ReactElement {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');   // ✅ NEW
   const [loadingMsg, setLoadingMsg] = useState<string>(''); // ✅ OPTIONAL
+
+  const [search, setSearch] = useState("");
+  const [listingType, setListingType] = useState<"buy" | "rent" | "all">("all");
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   
 
   const fetchProduct = async () => {
-    setIsLoading(true);
-    const headersList = { "Content-Type": "application/json" };
-    const bodyContent = JSON.stringify({
-      page,
-      page_size: 100, // Fetching all furniture at once for pagination
-      sort_by: "created_at",
-      sort_order: "desc",
-      search: "",
-    });
+  setIsLoading(true);
 
-    try {
-      const response = await fetch(
-        "https://furnspace.onrender.com/api/v1/furniture/list_all",
-        {
-          method: "POST",
-          body: bodyContent,
-          headers: headersList,
-        }
-      );
-
-      const data = await response.json();
-
-      if (data && data.data) {
-        const filteredFurniture = data.data.filter(
-          (furniture: Furniture) => 
-            // Only include furniture for sale or rent AND with approved status
-            (furniture.is_for_sale || furniture.is_for_rent) && 
-            furniture.status === "approved"
-        );
-        setFurnitureList(filteredFurniture); // Only approved furniture for sale or rent
-        return filteredFurniture; // Return data for optional use
+  try {
+    const response = await axios.post(
+      "https://furnspace.onrender.com/api/v1/furniture/list_all",
+      {
+        page,
+        page_size: limit,
+        sort_by: sortBy,
+        sort_order: sortOrder,
+        search,
+        listing_type: listingType,
+        title: selectedTitleFilter === "all" ? "" : selectedTitleFilter,
       }
-    } catch (error) {
-      console.error("Error fetching furniture:", error);
-      setError("Failed to fetch furniture data. Please check your connection or API.");
-    } finally {
-      setIsLoading(false);
-    }
-    return null;
-  };
+    );
 
-  useEffect(() => {
+    setFurnitureList(response.data.data);
+
+  } catch (error) {
+    console.error(error);
+    setError("Failed to fetch furniture");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+useEffect(() => {
+  const delay = setTimeout(() => {
     fetchProduct();
-  }, []);
+  }, 500);
+
+  return () => clearTimeout(delay);
+}, [search, listingType, sortBy, sortOrder, page, limit, selectedTitleFilter]);
 
   useEffect(() => {
     const groupedItems = furnitureList.reduce((acc, furniture) => {
@@ -718,6 +714,34 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
                         <option key={title} value={title}>{title}</option>
                       ))}
                     </select>
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      value={search}
+                      onChange={(e) => {
+                        setPage(1);
+                        setSearch(e.target.value);
+                      }}
+                    />
+
+                    <select
+                        value={listingType}
+                        onChange={(e) => {
+                          setPage(1);
+                          setListingType(e.target.value as any);
+                        }}
+                      >
+                      <option value="all">All</option>
+                      <option value="buy">For Sale</option>
+                      <option value="rent">For Rent</option>
+                    </select>
+
+                      <select onChange={(e) => setSortBy(e.target.value)}>
+                        <option value="created_at">Newest</option>
+                        <option value="price">Price</option>
+                        <option value="title">Title</option>
+                      </select>
+
                     <div className="absolute right-3 pointer-events-none">
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
@@ -800,6 +824,18 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
               <p className="text-center text-gray-500">No furniture found.</p>
             )}
           </section>
+
+        {/* pagination */}
+          <button onClick={() => setPage((prev) => Math.max(prev - 1, 1))}>
+                Prev
+              </button>
+
+              <span>Page: {page}</span>
+
+              <button onClick={() => setPage((prev) => prev + 1)}>
+                Next
+          </button>
+
         </main>
       </div>
       
