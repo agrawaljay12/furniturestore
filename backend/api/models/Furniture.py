@@ -393,12 +393,11 @@ class Furniture(BaseModel):
             )
  
     @staticmethod
-    def get_all_furniture(query_params: dict) -> List[Dict]:
+    def get_all_furniture(query_params: dict):
 
         try:
-
             search = query_params.get("search", "")
-            sort_by = query_params.get("sort_by", "price")
+            sort_by = query_params.get("sort_by", "created_at")
             order = query_params.get("order", "asc").lower()
             page = int(query_params.get("page", 1))
             limit = int(query_params.get("limit", 10))
@@ -408,26 +407,22 @@ class Furniture(BaseModel):
             query = {"status": "approved"}
 
             if listing_type == "buy":
-                    query["is_for_sale"] = True
+                query["is_for_sale"] = True
             elif listing_type == "rent":
-                    query["is_for_rent"] = True
-
-            filters = []
+                query["is_for_rent"] = True
 
             if title:
-                filters.append({"title": {"$regex": title.strip(), "$options": "i"}})
+                query["title"] = {"$regex": title.strip(), "$options": "i"}
 
             if search:
-                filters.append({
-                    "$or": [
-                        {"title": {"$regex": search, "$options": "i"}},
-                        {"description": {"$regex": search, "$options": "i"}},
-                        {"category": {"$regex": search, "$options": "i"}}
-                    ]
-                })
+                query["$or"] = [
+                    {"title": {"$regex": search, "$options": "i"}},
+                    {"description": {"$regex": search, "$options": "i"}},
+                    {"category": {"$regex": search, "$options": "i"}}
+                ]
 
-            allowed_sort_fields = ["price","rent_price","created_at","title","category","description"]
-            
+            allowed_sort_fields = ["price", "rent_price", "created_at", "title", "category"]
+
             if sort_by not in allowed_sort_fields:
                 sort_by = "created_at"
 
@@ -440,7 +435,7 @@ class Furniture(BaseModel):
             cursor = (
                 furniture_collection
                 .find(query)
-                .collation({"locale": "en", "strength": 2})  # ✅ ADD THIS
+                .collation({"locale": "en", "strength": 2})
                 .sort(sort_by, sort_order)
                 .skip(skip)
                 .limit(limit)
@@ -449,20 +444,16 @@ class Furniture(BaseModel):
             furniture_list = list(cursor)
 
             for furniture in furniture_list:
-
-                # Convert ObjectId
                 furniture["_id"] = str(furniture["_id"])
 
-                # Convert datetime
                 if isinstance(furniture.get("created_at"), datetime):
                     furniture["created_at"] = furniture["created_at"].isoformat()
 
-                # Safe price conversion
-                if "rent_price" in furniture and furniture["rent_price"] is not None:
-                    try:
-                        furniture["rent_price"] = float(furniture["rent_price"])
-                    except:
-                        pass
+                if "price" in furniture:
+                    furniture["price"] = float(furniture.get("price", 0))
+
+                if "rent_price" in furniture:
+                    furniture["rent_price"] = float(furniture.get("rent_price", 0))
 
             return {
                 "items": furniture_list,
@@ -473,10 +464,8 @@ class Furniture(BaseModel):
             }
 
         except Exception as e:
-            print("Furniture Service Error:", e)
-
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=500,
                 detail=f"Error fetching furniture: {str(e)}"
             )
 
