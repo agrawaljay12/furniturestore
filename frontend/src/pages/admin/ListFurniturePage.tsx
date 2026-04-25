@@ -57,34 +57,37 @@ function ListFurniture(): React.ReactElement {
   const [sortOrder, ] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [limit, ] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
   
 
   const fetchProduct = async () => {
-  setIsLoading(true);
+    setIsLoading(true);
 
-  try {
-    const response = await axios.post(
-      "https://furnspace.onrender.com/api/v1/furniture/list_all",
-      {
-        page,
-        page_size: limit,
-        sort_by: sortBy,
-        sort_order: sortOrder,
-        search,
-        listing_type: listingType,
-        title: selectedTitleFilter === "all" ? "" : selectedTitleFilter,
-      }
-    );
+    try {
+      const response = await axios.post(
+        "https://furnspace.onrender.com/api/v1/furniture/list_all",
+        {
+          page: page,
+          page_size: limit,   // backend maps to "limit"
+          sort_by: sortBy,
+          sort_order: sortOrder, // backend maps to "order"
+          search: search,
+          listing_type: listingType === "all" ? "all" : listingType,
+        }
+      );
 
-    setFurnitureList(response.data.data);
+      setFurnitureList(response.data.data);
 
-  } catch (error) {
-    console.error(error);
-    setError("Failed to fetch furniture");
-  } finally {
-    setIsLoading(false);
-  }
-};
+      // OPTIONAL (for pagination UI)
+      setTotalPages(response.data.pagination.total_pages);
+
+    } catch (error) {
+      console.error(error);
+      setError("Failed to fetch furniture");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 useEffect(() => {
   const delay = setTimeout(() => {
@@ -736,11 +739,19 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
                       <option value="rent">For Rent</option>
                     </select>
 
-                      <select onChange={(e) => setSortBy(e.target.value)}>
-                        <option value="created_at">Newest</option>
-                        <option value="price">Price</option>
-                        <option value="title">Title</option>
-                      </select>
+                    <select
+                        value={sortBy}
+                        onChange={(e) => {
+                          setPage(1);
+                          setSortBy(e.target.value);
+                        }}
+                      >
+                      <option value="created_at">Newest</option>
+                      <option value="price">Price</option>
+                      <option value="rent_price">Rent Price</option>
+                      <option value="title">Title</option>
+                      <option value="category">Category</option>
+                    </select>
 
                     <div className="absolute right-3 pointer-events-none">
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -826,15 +837,27 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
           </section>
 
         {/* pagination */}
-          <button onClick={() => setPage((prev) => Math.max(prev - 1, 1))}>
-                Prev
-              </button>
-
-              <span>Page: {page}</span>
-
-              <button onClick={() => setPage((prev) => prev + 1)}>
-                Next
+        <div className="flex justify-center items-center gap-4 mt-6">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(prev => prev - 1)}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          >
+            Prev
           </button>
+
+          <span className="font-semibold">
+            Page {page} of {totalPages}
+          </span>
+
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(prev => prev + 1)}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
 
         </main>
       </div>
