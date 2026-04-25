@@ -401,7 +401,6 @@ class Furniture(BaseModel):
             order = query_params.get("order", "asc").lower()
             page = int(query_params.get("page", 1))
             limit = int(query_params.get("limit", 10))
-            title = query_params.get("title", "")
             listing_type = query_params.get("listing_type", "all")
 
             query = {"status": "approved"}
@@ -411,8 +410,6 @@ class Furniture(BaseModel):
             elif listing_type == "rent":
                 query["is_for_rent"] = True
 
-            if title:
-                query["title"] = {"$regex": title.strip(), "$options": "i"}
 
             if search:
                 query["$or"] = [

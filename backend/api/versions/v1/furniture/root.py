@@ -456,10 +456,10 @@ async def search_furniture(request: Request):
         )
     
 
-    # Description : List all user furniture 
-    # Request Type : POST
-    # Path : https://furnspace.onrender.com/api/v1/furniture/list_all
-    # Default Port : 10007     
+# Description : List all user furniture 
+# Request Type : POST
+# Path : https://furnspace.onrender.com/api/v1/furniture/list_all
+# Default Port : 10007     
 
 @router.post("/list_all")
 async def list_all_furniture(request: Request):
@@ -473,7 +473,6 @@ async def list_all_furniture(request: Request):
             "sort_by": body.get("sort_by", "price"),
             "order": body.get("sort_order", "asc"),
             "search": body.get("search", ""),
-            "title": body.get("title", ""),
             "listing_type": body.get("listing_type", "all")
         }
 
