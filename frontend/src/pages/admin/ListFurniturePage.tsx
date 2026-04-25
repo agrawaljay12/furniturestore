@@ -54,7 +54,7 @@ function ListFurniture(): React.ReactElement {
   const [search, setSearch] = useState("");
   const [listingType, setListingType] = useState<"buy" | "rent" | "all">("all");
   const [sortBy, setSortBy] = useState("created_at");
-  const [sortOrder, ] = useState<"asc" | "desc">("desc");
+  const [Order, setOrder ] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [limit, ] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -68,17 +68,15 @@ function ListFurniture(): React.ReactElement {
         "https://furnspace.onrender.com/api/v1/furniture/list_all",
         {
           page: page,
-          page_size: limit,   // backend maps to "limit"
+          limit: limit,           // ✅ correct
           sort_by: sortBy,
-          sort_order: sortOrder, // backend maps to "order"
+          order: Order,           // ✅ correct
           search: search,
-          listing_type: listingType === "all" ? "all" : listingType,
+          listing_type: listingType,
         }
       );
 
       setFurnitureList(response.data.data);
-
-      // OPTIONAL (for pagination UI)
       setTotalPages(response.data.pagination.total_pages);
 
     } catch (error) {
@@ -95,20 +93,25 @@ useEffect(() => {
   }, 500);
 
   return () => clearTimeout(delay);
-}, [search, listingType, sortBy, sortOrder, page, limit, selectedTitleFilter]);
+}, [search, listingType, sortBy, Order, page, limit]);
 
   useEffect(() => {
     const groupedItems = furnitureList.reduce((acc, furniture) => {
-      if (!acc[furniture.title]) {
-        acc[furniture.title] = { forSale: [], forRent: [] };
-      }
-      if (furniture.is_for_sale) {
-        acc[furniture.title].forSale.push(furniture);
-      }
-      if (furniture.is_for_rent) {
-        acc[furniture.title].forRent.push(furniture);
-      }
-      return acc;
+    const title = furniture.title || "Unknown";
+
+        if (!acc[title]) {
+          acc[title] = { forSale: [], forRent: [] };
+        }
+
+        if (furniture.is_for_sale === true) {
+          acc[title].forSale.push(furniture);
+        }
+
+        if (furniture.is_for_rent === true) {
+          acc[title].forRent.push(furniture);
+        }
+
+        return acc;
     }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
     
     setGroupedFurnitureState(groupedItems);
@@ -437,6 +440,12 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
 
   const handleTabChange = (tab: 'sale' | 'rent' | 'all') => {
     setActiveTab(tab);
+
+    if (tab === "sale") setListingType("buy");
+    else if (tab === "rent") setListingType("rent");
+    else setListingType("all");
+
+    setPage(1);
   };
 
   const handleTitleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

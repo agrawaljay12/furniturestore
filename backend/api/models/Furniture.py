@@ -394,23 +394,23 @@ class Furniture(BaseModel):
  
     @staticmethod
     def get_all_furniture(query_params: dict):
-
         try:
             search = query_params.get("search", "")
             sort_by = query_params.get("sort_by", "created_at")
-            order = query_params.get("order", "asc").lower()
+            order = query_params.get("order", "desc").lower()
             page = int(query_params.get("page", 1))
             limit = int(query_params.get("limit", 10))
             listing_type = query_params.get("listing_type", "all")
 
             query = {"status": "approved"}
 
+            # FILTER
             if listing_type == "buy":
                 query["is_for_sale"] = True
             elif listing_type == "rent":
                 query["is_for_rent"] = True
 
-
+            # SEARCH
             if search:
                 query["$or"] = [
                     {"title": {"$regex": search, "$options": "i"}},
@@ -418,18 +418,17 @@ class Furniture(BaseModel):
                     {"category": {"$regex": search, "$options": "i"}}
                 ]
 
+            # SORT VALIDATION
             allowed_sort_fields = ["price", "rent_price", "created_at", "title", "category"]
-
             if sort_by not in allowed_sort_fields:
                 sort_by = "created_at"
 
             sort_order = 1 if order == "asc" else -1
-
             skip = (page - 1) * limit
 
             total_count = furniture_collection.count_documents(query)
 
-            cursor = (
+            furniture_list = list(
                 furniture_collection
                 .find(query)
                 .collation({"locale": "en", "strength": 2})
@@ -438,26 +437,29 @@ class Furniture(BaseModel):
                 .limit(limit)
             )
 
-            furniture_list = list(cursor)
-
+            # FORMAT DATA
             for furniture in furniture_list:
                 furniture["_id"] = str(furniture["_id"])
 
                 if isinstance(furniture.get("created_at"), datetime):
                     furniture["created_at"] = furniture["created_at"].isoformat()
 
-                if "price" in furniture:
-                    furniture["price"] = float(furniture.get("price", 0))
+                # SAFE NORMALIZATION
+                furniture["price"] = float(furniture.get("price", 0))
+                furniture["rent_price"] = float(furniture.get("rent_price", 0))
 
-                if "rent_price" in furniture:
-                    furniture["rent_price"] = float(furniture.get("rent_price", 0))
+                # CRITICAL FIX
+                furniture["is_for_sale"] = bool(furniture.get("is_for_sale", False))
+                furniture["is_for_rent"] = bool(furniture.get("is_for_rent", False))
 
             return {
                 "items": furniture_list,
-                "total": total_count,
-                "page": page,
-                "limit": limit,
-                "total_pages": (total_count + limit - 1) // limit
+                "pagination": {
+                    "total": total_count,
+                    "page": page,
+                    "limit": limit,
+                    "total_pages": (total_count + limit - 1) // limit
+                }
             }
 
         except Exception as e:
