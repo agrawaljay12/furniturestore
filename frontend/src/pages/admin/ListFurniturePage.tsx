@@ -54,7 +54,7 @@ function ListFurniture(): React.ReactElement {
   const [search, setSearch] = useState("");
   const [listingType, setListingType] = useState<"buy" | "rent" | "all">("all");
   const [sortBy, setSortBy] = useState("created_at");
-  const [Order, setOrder ] = useState<"asc" | "desc">("desc");
+  const [Order,  ] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [limit, ] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
