@@ -60,30 +60,31 @@ function ListFurniture(): React.ReactElement {
   
 
   const fetchProduct = async () => {
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      const response = await axios.post(
-        "https://furnspace.onrender.com/api/v1/furniture/list_all",
-        {
-          page: page,
-          page_size: limit,
-          sort_by: sortBy,
-          sort_order: sortOrder,
-          search: search,
-          listing_type: listingType,
-        }
-      );
+  try {
+    const response = await axios.post(
+      "https://furnspace.onrender.com/api/v1/furniture/list_all",
+      {
+        page,
+        page_size: limit,
+        sort_by: sortBy,
+        sort_order: sortOrder,
+        search,
+        listing_type: listingType,
+        title: selectedTitleFilter === "all" ? "" : selectedTitleFilter,
+      }
+    );
 
-      setFurnitureList(response.data.data);
+    setFurnitureList(response.data.data);
 
-    } catch (error) {
-      console.error(error);
-      setError("Failed to fetch furniture");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  } catch (error) {
+    console.error(error);
+    setError("Failed to fetch furniture");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 useEffect(() => {
   const delay = setTimeout(() => {
