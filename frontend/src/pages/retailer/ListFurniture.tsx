@@ -84,17 +84,19 @@ function ListFurniture(): React.ReactElement {
 
       const { sort_by, sort_order } = getSortParams();
 
+      const payload = {
+        page,
+        limit,
+        search: debouncedSearch.trim(),
+        sort_by,
+        sort_order,
+        listing_type: activeTab, // all | buy | rent
+      };
+
       const response = await axios.post(
         `https://furnspace.onrender.com/api/v1/furniture/list/${userid}`,
+        payload,
         {
-          data: {
-            page,
-            limit,
-            search: debouncedSearch,
-            sort_by,
-            sort_order,
-            listing_type: activeTab,
-          },
           headers: {
             "Content-Type": "application/json",
           },
@@ -103,11 +105,17 @@ function ListFurniture(): React.ReactElement {
 
       if (response.data?.data) {
         setFurnitureList(response.data.data);
-        setTotal(response.data.pagination.total);
+        setTotal(response.data.pagination?.total || 0);
+        setError("");
+      } else {
+        setFurnitureList([]);
+        setTotal(0);
         setError("");
       }
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error("Fetch furniture error:", error?.response?.data || error);
+      setFurnitureList([]);
+      setTotal(0);
       setError("Failed to fetch furniture");
     }
   };
@@ -983,7 +991,7 @@ function ListFurniture(): React.ReactElement {
                  </div>
                </div>
              </form>
-             
+
              <div className="flex justify-end mt-6 space-x-4 border-t pt-4">
                <button
                  className="bg-slate-600 hover:bg-slate-700 text-white px-6 py-2 rounded-lg shadow-md transition duration-300 flex items-center"
