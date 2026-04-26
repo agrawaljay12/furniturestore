@@ -79,7 +79,7 @@ class Furniture(BaseModel):
             order = query_param.get("sort_order", "desc").lower()
             page = int(query_param.get("page", 1))
             limit = int(query_param.get("limit", 10))
-            listing_type = query_param.get("type", "all")
+            listing_type = query_param.get("listing_type", "all")
 
             # -------------------------
             # BASE QUERY
@@ -116,8 +116,8 @@ class Furniture(BaseModel):
                     ]
                 }
 
-                # merge with existing query safely
-                query = {"$and": [query, search_filter]}
+                # # merge with existing query safely
+                # query = {"$and": [query, search_filter]}
 
             # -------------------------
             # SORT VALIDATION
@@ -418,6 +418,7 @@ class Furniture(BaseModel):
 
             # SORT VALIDATION
             allowed_sort_fields = ["price", "rent_price", "created_at", "title", "category"]
+            
             if sort_by not in allowed_sort_fields:
                 sort_by = "created_at"
 

@@ -193,7 +193,7 @@ async def list_furniture(
     search: str = Query(""),
     sort_by: str = Query("created_at"),
     sort_order: str = Query("desc", alias="order"),
-    type: str = Query("all")
+    listing_type: str = Query("all")
 ):
     try:
         query_param = {
@@ -202,7 +202,7 @@ async def list_furniture(
             "search": search,
             "sort_by": sort_by,
             "sort_order": sort_order,
-            "type": type
+            "listing_type": listing_type
         }
 
         result = Furniture.get_furniture(user_id, query_param)
@@ -215,8 +215,8 @@ async def list_furniture(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-        
+
+
 # Request Type : POST
 # Path : https://furnspace.onrender.com/api/v1/furniture/update-furniture
 # Default Port : 10007
