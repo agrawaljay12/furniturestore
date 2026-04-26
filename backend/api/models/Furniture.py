@@ -450,6 +450,9 @@ class Furniture(BaseModel):
 
                 if isinstance(furniture.get("updated_at"), datetime):
                     furniture["updated_at"] = furniture["updated_at"].isoformat()
+                
+                if isinstance(furniture.get("created_at"), datetime):
+                    furniture["created_at"] = furniture["created_at"].isoformat()
 
                 # SAFE NORMALIZATION
                 def safe_float(value):
