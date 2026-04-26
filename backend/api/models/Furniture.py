@@ -108,16 +108,12 @@ class Furniture(BaseModel):
             # SEARCH FILTER (FIXED)
             # -------------------------
             if search:
-                search_filter = {
-                    "$or": [
+                    query["$or"] = [
                         {"title": {"$regex": search, "$options": "i"}},
                         {"description": {"$regex": search, "$options": "i"}},
                         {"category": {"$regex": search, "$options": "i"}}
                     ]
-                }
-
-                # # merge with existing query safely
-                # query = {"$and": [query, search_filter]}
+                
 
             # -------------------------
             # SORT VALIDATION
@@ -418,7 +414,7 @@ class Furniture(BaseModel):
 
             # SORT VALIDATION
             allowed_sort_fields = ["price", "rent_price", "created_at", "title", "category"]
-            
+
             if sort_by not in allowed_sort_fields:
                 sort_by = "created_at"
 
