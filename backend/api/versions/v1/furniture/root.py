@@ -186,7 +186,7 @@ async def add(request: Request, files: List[UploadFile] = File(...)):
 # Default Port : 10007
 
 @router.get("/list/{user_id}")
-async def list_furniture(request: Request):
+async def list_furniture(user_id: str, request: Request):
 
     try:
         body = await request.json()
@@ -200,7 +200,7 @@ async def list_furniture(request: Request):
             "listing_type": body.get("listing_type", "all")
         }
 
-        result = Furniture.get_furniture(query_params)
+        result = Furniture.get_furniture(user_id, query_params)
 
         return JSONResponse(
             status_code=status.HTTP_200_OK,
