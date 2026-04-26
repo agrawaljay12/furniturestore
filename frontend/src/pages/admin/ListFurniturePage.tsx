@@ -740,7 +740,10 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
                       <select
                         value={`${sortBy}_${order}`}
                         onChange={(e) => {
-                          const [field, dir] = e.target.value.split("_");
+                          const lastUnderscoreIndex = e.target.value.lastIndexOf("_");
+
+                          const field = e.target.value.substring(0, lastUnderscoreIndex);
+                          const dir = e.target.value.substring(lastUnderscoreIndex + 1);
 
                           setPage(1);
                           setSortBy(field);
