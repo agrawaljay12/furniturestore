@@ -983,6 +983,7 @@ function ListFurniture(): React.ReactElement {
                  </div>
                </div>
              </form>
+             
              <div className="flex justify-end mt-6 space-x-4 border-t pt-4">
                <button
                  className="bg-slate-600 hover:bg-slate-700 text-white px-6 py-2 rounded-lg shadow-md transition duration-300 flex items-center"
