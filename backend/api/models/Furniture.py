@@ -407,8 +407,15 @@ class Furniture(BaseModel):
             # FILTER
             if listing_type == "buy":
                 query["is_for_sale"] = True
+
             elif listing_type == "rent":
                 query["is_for_rent"] = True
+                
+            else:
+                query["$or"] = [
+                    {"is_for_sale": True},
+                    {"is_for_rent": True}
+    ]
 
             # SEARCH
             if search:

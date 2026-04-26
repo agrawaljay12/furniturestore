@@ -484,14 +484,9 @@ async def list_all_furniture(request: Request):
                 "status": 200,
                 "status_message": "OK",
                 "data": result["items"],
-                "pagination": {
-                    "total": result["total"],
-                    "page": result["page"],
-                    "limit": result["limit"],
-                    "total_pages": result["total_pages"]
-                }
-            }   
-        );
+                "pagination": result["pagination"]   
+            }
+        )
 
     except HTTPException as http_exc:
         raise http_exc

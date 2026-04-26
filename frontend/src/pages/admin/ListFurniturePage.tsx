@@ -33,16 +33,14 @@ function ListFurniture(): React.ReactElement {
   const [editMode, setEditMode] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
-  const [imageURL, setImageURL] = useState<string>('');
-  // const [file, setFile] = useState<File | null>(null);
-  const [activeTab, setActiveTab] = useState<'sale' | 'rent' | 'all'>('sale');
-  // const [isImagePreviewOpen, setIsImagePreviewOpen] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [groupedFurnitureState, setGroupedFurnitureState] = useState<Record<string, { forSale: Furniture[], forRent: Furniture[] }>>({});
-  const [selectedTitleFilter, setSelectedTitleFilter] = useState<string>('all');
 
-  // const [replaceIndexes, setReplaceIndexes] = useState<number[]>([]);
+  const [imageURL, setImageURL] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'sale' | 'rent' | 'all'>('all');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  // const [groupedFurnitureState, setGroupedFurnitureState] = useState<Record<string, { forSale: Furniture[], forRent: Furniture[] }>>({});
+  const [selectedTitleFilter, ] = useState<string>('all');
+
+
   const [files, setFiles] = useState<File[]>([]);
   const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
 
@@ -54,7 +52,7 @@ function ListFurniture(): React.ReactElement {
   const [search, setSearch] = useState("");
   const [listingType, setListingType] = useState<"buy" | "rent" | "all">("all");
   const [sortBy, setSortBy] = useState("created_at");
-  const [Order,  ] = useState<"asc" | "desc">("desc");
+  const [order, setorder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [limit, ] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -70,14 +68,14 @@ function ListFurniture(): React.ReactElement {
           page: page,
           limit: limit,           // ✅ correct
           sort_by: sortBy,
-          order: Order,           // ✅ correct
+          order: order,           // ✅ correct
           search: search,
           listing_type: listingType,
         }
       );
 
       setFurnitureList(response.data.data);
-      setTotalPages(response.data.pagination.total_pages);
+      setTotalPages(response.data.pagination.total_pages || 1);
 
     } catch (error) {
       console.error(error);
@@ -87,35 +85,43 @@ function ListFurniture(): React.ReactElement {
     }
   };
 
+
+useEffect(() => {
+  if (page > totalPages) {
+    setPage(1);
+  }
+}, [totalPages]);
+
+
 useEffect(() => {
   const delay = setTimeout(() => {
     fetchProduct();
   }, 500);
 
   return () => clearTimeout(delay);
-}, [search, listingType, sortBy, Order, page, limit]);
+}, [search, listingType, sortBy, order, page, limit]);
 
-  useEffect(() => {
-    const groupedItems = furnitureList.reduce((acc, furniture) => {
-    const title = furniture.title || "Unknown";
+  // useEffect(() => {
+  //   const groupedItems = furnitureList.reduce((acc, furniture) => {
+  //   const title = furniture.title || "Unknown";
 
-        if (!acc[title]) {
-          acc[title] = { forSale: [], forRent: [] };
-        }
+  //       if (!acc[title]) {
+  //         acc[title] = { forSale: [], forRent: [] };
+  //       }
 
-        if (furniture.is_for_sale === true) {
-          acc[title].forSale.push(furniture);
-        }
+  //       if (furniture.is_for_sale === true) {
+  //         acc[title].forSale.push(furniture);
+  //       }
 
-        if (furniture.is_for_rent === true) {
-          acc[title].forRent.push(furniture);
-        }
+  //       if (furniture.is_for_rent === true) {
+  //         acc[title].forRent.push(furniture);
+  //       }
 
-        return acc;
-    }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
+  //       return acc;
+  //   }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
     
-    setGroupedFurnitureState(groupedItems);
-  }, [furnitureList]);
+  //   setGroupedFurnitureState(groupedItems);
+  // }, [furnitureList]);
 
   const handlePreview = (furniture: Furniture) => {
     setSelectedFurniture(furniture);
@@ -340,103 +346,103 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
     }
   };
 
-  const groupedFurniture = groupedFurnitureState;
+  // const groupedFurniture = groupedFurnitureState;
 
-  const renderFurnitureCard = (furniture: Furniture, type: 'sale' | 'rent') => {
-    return (
-      <div
-        key={furniture._id}
-        className={`relative overflow-hidden border-0 bg-white p-6 mb-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
-      >
-        <div className={`absolute top-0 right-0 p-2 rounded-bl-lg text-white text-xs font-bold ${
-          type === 'sale' 
-            ? 'bg-gradient-to-r from-blue-600 to-blue-500' 
-            : 'bg-gradient-to-r from-orange-600 to-orange-500'
-        }`}>
-          {type === 'sale' ? 'FOR SALE' : 'FOR RENT'}
-        </div>
+  // const renderFurnitureCard = (furniture: Furniture, type: 'sale' | 'rent') => {
+  //   return (
+  //     <div
+  //       key={furniture._id}
+  //       className={`relative overflow-hidden border-0 bg-white p-6 mb-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
+  //     >
+  //       <div className={`absolute top-0 right-0 p-2 rounded-bl-lg text-white text-xs font-bold ${
+  //         type === 'sale' 
+  //           ? 'bg-gradient-to-r from-blue-600 to-blue-500' 
+  //           : 'bg-gradient-to-r from-orange-600 to-orange-500'
+  //       }`}>
+  //         {type === 'sale' ? 'FOR SALE' : 'FOR RENT'}
+  //       </div>
         
-        <div className={`absolute inset-x-0 top-0 h-1 ${
-          type === 'sale' 
-            ? 'bg-gradient-to-r from-blue-600 to-teal-500' 
-            : 'bg-gradient-to-r from-orange-600 to-amber-500'
-        }`}></div>
+  //       <div className={`absolute inset-x-0 top-0 h-1 ${
+  //         type === 'sale' 
+  //           ? 'bg-gradient-to-r from-blue-600 to-teal-500' 
+  //           : 'bg-gradient-to-r from-orange-600 to-amber-500'
+  //       }`}></div>
         
-        <h3 className="text-2xl font-bold text-slate-800 mb-3 mt-2">{furniture.title}</h3>
+  //       <h3 className="text-2xl font-bold text-slate-800 mb-3 mt-2">{furniture.title}</h3>
         
-        <div className="grid grid-cols-2 gap-3 mb-2">
-          <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
-            <span className="font-semibold text-slate-500 block text-xs">CATEGORY</span>
-            {furniture.category}
-          </p>
-          <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
-            <span className="font-semibold text-slate-500 block text-xs">CONDITION</span>
-            {furniture.condition}
-          </p>
-          {type === 'sale' ? (
-            <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
-              <span className="font-semibold text-slate-500 block text-xs">PRICE</span>
-              <span className="text-blue-600 font-bold">${furniture.price}</span>
-            </p>
-          ) : (
-            <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
-              <span className="font-semibold text-slate-500 block text-xs">RENT</span>
-              <span className="text-orange-600 font-bold">${furniture.rent_price}/day</span>
-            </p>
-          )}
-          <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
-            <span className="font-semibold text-slate-500 block text-xs">LOCATION</span>
-            {furniture.location}
-          </p>
-        </div>
+  //       <div className="grid grid-cols-2 gap-3 mb-2">
+  //         <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
+  //           <span className="font-semibold text-slate-500 block text-xs">CATEGORY</span>
+  //           {furniture.category}
+  //         </p>
+  //         <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
+  //           <span className="font-semibold text-slate-500 block text-xs">CONDITION</span>
+  //           {furniture.condition}
+  //         </p>
+  //         {type === 'sale' ? (
+  //           <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
+  //             <span className="font-semibold text-slate-500 block text-xs">PRICE</span>
+  //             <span className="text-blue-600 font-bold">${furniture.price}</span>
+  //           </p>
+  //         ) : (
+  //           <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
+  //             <span className="font-semibold text-slate-500 block text-xs">RENT</span>
+  //             <span className="text-orange-600 font-bold">${furniture.rent_price}/day</span>
+  //           </p>
+  //         )}
+  //         <p className="text-slate-700 text-sm bg-slate-50 p-2 rounded-lg">
+  //           <span className="font-semibold text-slate-500 block text-xs">LOCATION</span>
+  //           {furniture.location}
+  //         </p>
+  //       </div>
         
-        <div className="h-48 mb-4 overflow-hidden rounded-lg group relative">
-          {furniture.images && furniture.images.length > 0 ? (
-            <img
-              src={furniture.images[0]}
-              alt={furniture.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-          ) : (
-            furniture.image && (
-              <img
-                src={furniture.image}
-                alt={furniture.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-            )
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
-        </div>
+  //       <div className="h-48 mb-4 overflow-hidden rounded-lg group relative">
+  //         {furniture.images && furniture.images.length > 0 ? (
+  //           <img
+  //             src={furniture.images[0]}
+  //             alt={furniture.title}
+  //             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+  //           />
+  //         ) : (
+  //           furniture.image && (
+  //             <img
+  //               src={furniture.image}
+  //               alt={furniture.title}
+  //               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+  //             />
+  //           )
+  //         )}
+  //         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
+  //       </div>
         
-        <div className="flex justify-between mt-4">
-          <button
-            className={`px-4 py-2 rounded-lg text-white font-medium shadow-md flex items-center justify-center transition-all duration-300 ${
-              type === 'sale' 
-                ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600' 
-                : 'bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600'
-            }`}
-            onClick={() => handlePreview(furniture)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            Manage
-          </button>
-          <button
-            className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center"
-            onClick={() => handleDelete(furniture._id)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete
-          </button>
-        </div>
-      </div>
-    );
-  };
+  //       <div className="flex justify-between mt-4">
+  //         <button
+  //           className={`px-4 py-2 rounded-lg text-white font-medium shadow-md flex items-center justify-center transition-all duration-300 ${
+  //             type === 'sale' 
+  //               ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600' 
+  //               : 'bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600'
+  //           }`}
+  //           onClick={() => handlePreview(furniture)}
+  //         >
+  //           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  //             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  //             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  //           </svg>
+  //           Manage
+  //         </button>
+  //         <button
+  //           className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center"
+  //           onClick={() => handleDelete(furniture._id)}
+  //         >
+  //           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  //             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  //           </svg>
+  //           Delete
+  //         </button>
+  //       </div>
+  //     </div>
+  //   );
+  // };
 
   const handleTabChange = (tab: 'sale' | 'rent' | 'all') => {
     setActiveTab(tab);
@@ -448,9 +454,7 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
     setPage(1);
   };
 
-  const handleTitleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedTitleFilter(e.target.value);
-  };
+
 
   const renderUnifiedFurnitureCard = (furniture: Furniture) => {
     return (
@@ -644,7 +648,7 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
     );
   };
 
-  const uniqueTitles = Object.keys(groupedFurniture).sort();
+  // const uniqueTitles = Object.keys(groupedFurniture).sort();
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-slate-900">
@@ -716,16 +720,7 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
                     <div className="absolute left-3 text-gray-400">
                       <FiFilter size={16} />
                     </div>
-                    <select
-                      value={selectedTitleFilter}
-                      onChange={handleTitleFilterChange}
-                      className="appearance-none pl-10 pr-10 py-2.5 rounded-lg bg-transparent text-gray-700 dark:text-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                    >
-                      <option value="all">All Furniture Types</option>
-                      {uniqueTitles.map(title => (
-                        <option key={title} value={title}>{title}</option>
-                      ))}
-                    </select>
+                    
                     <input
                       type="text"
                       placeholder="Search..."
@@ -736,30 +731,30 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
                       }}
                     />
 
-                    <select
-                        value={listingType}
+                   <select
+                        value={`${sortBy}_${order}`}
                         onChange={(e) => {
-                          setPage(1);
-                          setListingType(e.target.value as any);
-                        }}
-                      >
-                      <option value="all">All</option>
-                      <option value="buy">For Sale</option>
-                      <option value="rent">For Rent</option>
-                    </select>
+                          const [field, dir] = e.target.value.split("_");
 
-                    <select
-                        value={sortBy}
-                        onChange={(e) => {
                           setPage(1);
-                          setSortBy(e.target.value);
+                          setSortBy(field);
+                          setorder(dir as "asc" | "desc");
                         }}
                       >
-                      <option value="created_at">Newest</option>
-                      <option value="price">Price</option>
-                      <option value="rent_price">Rent Price</option>
-                      <option value="title">Title</option>
-                      <option value="category">Category</option>
+                      <option value="created_at_desc">Newest First</option>
+                      <option value="created_at_asc">Oldest First</option>
+
+                      <option value="price_asc">Price: Low → High</option>
+                      <option value="price_desc">Price: High → Low</option>
+
+                      <option value="rent_price_asc">Rent: Low → High</option>
+                      <option value="rent_price_desc">Rent: High → Low</option>
+
+                      <option value="title_asc">Title: A → Z</option>
+                      <option value="title_desc">Title: Z → A</option>
+
+                      <option value="category_asc">Category: A → Z</option>
+                      <option value="category_desc">Category: Z → A</option>
                     </select>
 
                     <div className="absolute right-3 pointer-events-none">
@@ -778,71 +773,20 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
               </div>
             )}
 
-            {Object.keys(groupedFurniture).length > 0 ? (
-              <div className="space-y-12">
-                {Object.keys(groupedFurniture)
-                  .filter(category => selectedTitleFilter === 'all' || category === selectedTitleFilter)
-                  .map((category) => {
-                  const categoryItems = [
-                    ...groupedFurniture[category].forSale,
-                    ...groupedFurniture[category].forRent
-                  ];
-                  const titleToShow = categoryItems.length > 0 ? categoryItems[0].title.split(' ')[0] : category;
-                  
-                  const combinedItems = new Map();
-                  
-                  groupedFurniture[category].forSale.forEach(item => {
-                    combinedItems.set(item._id, item);
-                  });
-                  
-                  groupedFurniture[category].forRent.forEach(item => {
-                    if (!combinedItems.has(item._id)) {
-                      combinedItems.set(item._id, item);
-                    }
-                  });
-                  
-                  const combinedItemsList = Array.from(combinedItems.values());
-                  
-                  return (
-                    <div key={category} className="bg-white p-6 rounded-lg shadow-md">
-                      <h3 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-300">{titleToShow}</h3>
-                      
-                      {activeTab === 'all' && combinedItemsList.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {combinedItemsList.map((furniture) => renderUnifiedFurnitureCard(furniture))}
-                        </div>
-                      )}
-                      
-                      {activeTab === 'all' && combinedItemsList.length === 0 && (
-                        <p className="text-center text-gray-500 py-4">No furniture available in this category.</p>
-                      )}
-                      
-                      {activeTab === 'sale' && groupedFurniture[category].forSale.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {groupedFurniture[category].forSale.map((furniture) => renderFurnitureCard(furniture, 'sale'))}
-                        </div>
-                      )}
-                      
-                      {activeTab === 'sale' && groupedFurniture[category].forSale.length === 0 && (
-                        <p className="text-center text-gray-500 py-4">No furniture available for sale in this category.</p>
-                      )}
-
-                      {activeTab === 'rent' && groupedFurniture[category].forRent.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {groupedFurniture[category].forRent.map((furniture) => renderFurnitureCard(furniture, 'rent'))}
-                        </div>
-                      )}
-                      
-                      {activeTab === 'rent' && groupedFurniture[category].forRent.length === 0 && (
-                        <p className="text-center text-gray-500 py-4">No furniture available for rent in this category.</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : ( 
+            {furnitureList.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {furnitureList
+                    .filter(item => selectedTitleFilter === "all" || item.title === selectedTitleFilter)
+                    .map((furniture) => (
+                      <div key={furniture._id}>
+                        {renderUnifiedFurnitureCard(furniture)}
+                      </div>
+                    ))}
+                </div>
+              ) : (
               <p className="text-center text-gray-500">No furniture found.</p>
             )}
+
           </section>
 
         {/* pagination */}
