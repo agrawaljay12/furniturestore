@@ -185,44 +185,38 @@ async def add(request: Request, files: List[UploadFile] = File(...)):
 # Path : https://furnspace.onrender.com/api/v1/furniture/list/{user_id}
 # Default Port : 10007
 
-@router.get("/list/{user_id}", response_description="List All Furniture for a User")
+@router.get("/list/{user_id}")
 async def list_furniture(
     user_id: str,
     limit: int = Query(10),
     page: int = Query(1),
     search: str = Query(""),
     sort_by: str = Query("created_at"),
-    sort_order: str = Query("desc"),
-    type: str = Query("all")  # sale | rent | all
+    sort_order: str = Query("desc", alias="order"),
+    type: str = Query("all")
 ):
     try:
-        if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User ID is required"
-            )
-
         query_param = {
             "limit": limit,
             "page": page,
             "search": search,
             "sort_by": sort_by,
             "sort_order": sort_order,
-            "type": type        # ✅ pass to service
+            "type": type
         }
 
         result = Furniture.get_furniture(user_id, query_param)
 
         return {
             "status": 200,
-            "status_message": "OK",
             "data": result["data"],
             "pagination": result["pagination"]
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))    
+        raise HTTPException(status_code=500, detail=str(e))
     
+        
 # Request Type : POST
 # Path : https://furnspace.onrender.com/api/v1/furniture/update-furniture
 # Default Port : 10007
