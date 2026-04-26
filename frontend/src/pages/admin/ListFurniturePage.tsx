@@ -715,23 +715,29 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
                   </button>
                 </div>
                 
-                <div className="w-full md:w-auto">
-                  <div className="relative inline-flex items-center bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700">
-                    <div className="absolute left-3 text-gray-400">
-                      <FiFilter size={16} />
-                    </div>
-                    
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={search}
-                      onChange={(e) => {
-                        setPage(1);
-                        setSearch(e.target.value);
-                      }}
-                    />
+                <div className="w-full flex flex-col md:flex-row gap-3">
 
-                   <select
+                    {/* 🔍 SEARCH BAR */}
+                    <div className="relative w-full md:w-72">
+                      <input
+                        type="text"
+                        placeholder="Search furniture..."
+                        value={search}
+                        onChange={(e) => {
+                          setPage(1);
+                          setSearch(e.target.value);
+                        }}
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+
+                      <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <FiFilter size={16} />
+                      </div>
+                    </div>
+
+                    {/* 🔽 SORT DROPDOWN */}
+                    <div className="w-full md:w-60">
+                      <select
                         value={`${sortBy}_${order}`}
                         onChange={(e) => {
                           const [field, dir] = e.target.value.split("_");
@@ -740,30 +746,26 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
                           setSortBy(field);
                           setorder(dir as "asc" | "desc");
                         }}
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
-                      <option value="created_at_desc">Newest First</option>
-                      <option value="created_at_asc">Oldest First</option>
+                        <option value="created_at_desc">Newest First</option>
+                        <option value="created_at_asc">Oldest First</option>
 
-                      <option value="price_asc">Price: Low → High</option>
-                      <option value="price_desc">Price: High → Low</option>
+                        <option value="price_asc">Price: Low → High</option>
+                        <option value="price_desc">Price: High → Low</option>
 
-                      <option value="rent_price_asc">Rent: Low → High</option>
-                      <option value="rent_price_desc">Rent: High → Low</option>
+                        <option value="rent_price_asc">Rent: Low → High</option>
+                        <option value="rent_price_desc">Rent: High → Low</option>
 
-                      <option value="title_asc">Title: A → Z</option>
-                      <option value="title_desc">Title: Z → A</option>
+                        <option value="title_asc">Title: A → Z</option>
+                        <option value="title_desc">Title: Z → A</option>
 
-                      <option value="category_asc">Category: A → Z</option>
-                      <option value="category_desc">Category: Z → A</option>
-                    </select>
-
-                    <div className="absolute right-3 pointer-events-none">
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                      </svg>
+                        <option value="category_asc">Category: A → Z</option>
+                        <option value="category_desc">Category: Z → A</option>
+                      </select>
                     </div>
+
                   </div>
-                </div>
               </div>
             </div>
 
