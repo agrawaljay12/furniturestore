@@ -74,124 +74,86 @@ class Furniture(BaseModel):
     @staticmethod
     def get_furniture(user_id: str, query_param: dict):
         try:
-            # -------------------------
-            # PAGINATION
-            # -------------------------
-            limit = max(int(query_param.get("limit", 10)), 1)
-            page = max(int(query_param.get("page", 1)), 1)
-            skip = (page - 1) * limit
-
-            # -------------------------
-            # FILTERS
-            # -------------------------
-            search = query_param.get("search", "").strip()
-            status_filter = query_param.get("status", "approved")
-            type_filter = query_param.get("type", "all")
-
-            # -------------------------
-            # SORTING
-            # -------------------------
-            allowed_sort_fields = [
-                "title",
-                "category",
-                "created_at",
-                "price",
-                "rent_price"
-            ]
-
+            search = query_param.get("search", "")
             sort_by = query_param.get("sort_by", "created_at")
-            if sort_by not in allowed_sort_fields:
-                sort_by = "created_at"
+            order = query_param.get("sort_order", "desc").lower()
+            page = int(query_param.get("page", 1))
+            limit = int(query_param.get("limit", 10))
+            listing_type = query_param.get("type", "all")
 
-            sort_order = query_param.get("sort_order", "desc")
-            sort_direction = 1 if sort_order == "asc" else -1
+            query = {"created_by":user_id,"status": "approved"}
 
-            # -------------------------
-            # BASE QUERY
-            # -------------------------
-            query = {
-                "created_by": user_id,
-                "status": status_filter
-            }
-
-            # -------------------------
-            # TYPE FILTER
-            # -------------------------
-            if type_filter == "sale":
+            # FILTER
+            if listing_type == "buy":
                 query["is_for_sale"] = True
-            elif type_filter == "rent":
+
+            elif listing_type == "rent":
                 query["is_for_rent"] = True
 
-            # -------------------------
+            else:
+                query["$or"] = [
+                    {"is_for_sale": True},
+                    {"is_for_rent": True}
+            ]
+
             # SEARCH
-            # -------------------------
             if search:
                 query["$or"] = [
                     {"title": {"$regex": search, "$options": "i"}},
-                    {"category": {"$regex": search, "$options": "i"}},
-                    {"description": {"$regex": search, "$options": "i"}}
+                    {"description": {"$regex": search, "$options": "i"}},
+                    {"category": {"$regex": search, "$options": "i"}}
                 ]
+
+            # SORT VALIDATION
+            allowed_sort_fields = ["price", "rent_price", "created_at", "title", "category"]
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            sort_order = 1 if order == "asc" else -1
+            skip = (page - 1) * limit
+           
 
             # -------------------------
             # TOTAL COUNT
-            # -------------------------
             total_count = furniture_collection.count_documents(query)
 
-            # -------------------------
-            # AGGREGATION PIPELINE
-            # -------------------------
-            pipeline = [
-                {"$match": query},
+            furniture_list = list(
+                furniture_collection
+                .find(query)
+                .collation({"locale": "en", "strength": 2})
+                .sort(sort_by, sort_order)
+                .skip(skip)
+                .limit(limit)
+            )
 
-                # ✅ FIXED: Safe numeric sorting field
-                {
-                    "$addFields": {
-                        "sort_price": {
-                            "$cond": [
-                                {"$eq": ["$is_for_sale", True]},
-                                {"$ifNull": ["$price", 0]},
-                                {"$ifNull": ["$rent_price", 0]}
-                            ]
-                        }
-                    }
-                }
-            ]
+            # FORMAT DATA
+            for furniture in furniture_list:
+                furniture["_id"] = str(furniture["_id"])
 
-            # -------------------------
-            # SORT FIELD
-            # -------------------------
-            if sort_by in ["price", "rent_price"]:
-                sort_field = "sort_price"
-            else:
-                sort_field = sort_by
+                if isinstance(furniture.get("updated_at"), datetime):
+                    furniture["updated_at"] = furniture["updated_at"].isoformat()
+                
+                if isinstance(furniture.get("created_at"), datetime):
+                    furniture["created_at"] = furniture["created_at"].isoformat()
 
-            # -------------------------
-            # SORT + PAGINATION
-            # -------------------------
-            pipeline.extend([
-                {
-                    "$sort": {
-                        sort_field: sort_direction,
-                        "created_at": -1
-                    }
-                },
-                {"$skip": skip},
-                {"$limit": limit}
-            ])
+                # SAFE NORMALIZATION
+                def safe_float(value):
+                    if isinstance(value, (int, float)):
+                        return float(value)
+                    if isinstance(value, str) and value.strip() != "":
+                        try:
+                            return float(value)
+                        except ValueError:
+                            return 0.0
+                    return 0.0
 
-            # -------------------------
-            # EXECUTE QUERY
-            # -------------------------
-            furniture_list = list(furniture_collection.aggregate(pipeline))
+                furniture["price"] = safe_float(furniture.get("price"))
+                furniture["rent_price"] = safe_float(furniture.get("rent_price"))
 
-            # -------------------------
-            # FORMAT RESPONSE
-            # -------------------------
-            for item in furniture_list:
-                item["_id"] = str(item["_id"])
+                # CRITICAL FIX
+                furniture["is_for_sale"] = bool(furniture.get("is_for_sale", False))
+                furniture["is_for_rent"] = bool(furniture.get("is_for_rent", False))
 
-                if isinstance(item.get("created_at"), datetime):
-                    item["created_at"] = item["created_at"].isoformat()
 
             return {
                 "data": furniture_list,
@@ -415,7 +377,7 @@ class Furniture(BaseModel):
                 query["$or"] = [
                     {"is_for_sale": True},
                     {"is_for_rent": True}
-    ]
+            ]
 
             # SEARCH
             if search:

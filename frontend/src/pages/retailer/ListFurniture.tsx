@@ -454,56 +454,63 @@ function ListFurniture(): React.ReactElement {
   let sort_order = "";
 
   switch (sortOption) {
-    case "price_low_high":
+    case "price_asc":
       sort_by = activeTab === "rent" ? "rent_price" : "price";
       sort_order = "asc";
       break;
 
-    case "price_high_low":
+    case "price_desc":
       sort_by = activeTab === "rent" ? "rent_price" : "price";
       sort_order = "desc";
       break;
 
-    case "newest":
+    case "rent_asc":
+      sort_by = "rent_price";
+      sort_order = "asc";
+      break;
+
+    case "rent_desc":
+      sort_by = "rent_price";
+      sort_order = "desc";
+      break;
+
+    case "date_desc":
       sort_by = "created_at";
       sort_order = "desc";
       break;
 
-    case "oldest":
+    case "date_asc":
       sort_by = "created_at";
       sort_order = "asc";
       break;
 
-    case "price_low_high":
-      if (activeTab === "rent") {
-        sort_by = "rent_price";
-      } else if (activeTab === "sale") {
-        sort_by = "price";
-      } else {
-        sort_by = "price"; // fallback
-      }
+    case "title_asc":
+      sort_by = "title";
       sort_order = "asc";
       break;
 
-    case "price_high_low":
-      if (activeTab === "rent") {
-        sort_by = "rent_price";
-      } else if (activeTab === "sale") {
-        sort_by = "price";
-      } else {
-        sort_by = "price"; // fallback
-      }
+    case "title_desc":
+      sort_by = "title";
+      sort_order = "desc";
+      break;
+
+    case "category_asc":
+      sort_by = "category";
+      sort_order = "asc";
+      break;
+
+    case "category_desc":
+      sort_by = "category";
       sort_order = "desc";
       break;
 
     default:
-      sort_by = "";
-      sort_order = "";
+      sort_by = "created_at";
+      sort_order = "desc";
   }
 
   return { sort_by, sort_order };
 };
-
   const renderFurnitureCard = (furniture: Furniture, type: 'sale' | 'rent') => {
     return (
       <div

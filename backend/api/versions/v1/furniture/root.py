@@ -193,9 +193,6 @@ async def list_furniture(
     search: str = Query(""),
     sort_by: str = Query("created_at"),
     sort_order: str = Query("desc"),
-    
-    # ✅ NEW
-    status: str = Query("approved"),
     type: str = Query("all")  # sale | rent | all
 ):
     try:
@@ -211,7 +208,6 @@ async def list_furniture(
             "search": search,
             "sort_by": sort_by,
             "sort_order": sort_order,
-            "status": status,   # ✅ pass to service
             "type": type        # ✅ pass to service
         }
 
