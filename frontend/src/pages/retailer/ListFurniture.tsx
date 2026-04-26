@@ -72,32 +72,47 @@ function ListFurniture(): React.ReactElement {
   
   
 
-  const fetchProduct = async () => {
-  try {
-    setError("Loading furniture...");
+ const fetchProduct = async () => {
+    try {
+      setError("Loading furniture...");
 
-    let userid = localStorage.getItem('token');
+      let userid = localStorage.getItem('token');
 
-    const { sort_by, sort_order } = getSortParams();
+      const { sort_by, sort_order } = getSortParams();
 
-    const response = await fetch(
-        `https://furnspace.onrender.com/api/v1/furniture/list/${userid}?page=${page}&limit=${limit}&search=${debouncedSearch}&sort_by=${sort_by}&sort_order=${sort_order}&type=${activeTab}`
+      const response = await fetch(
+        `https://furnspace.onrender.com/api/v1/furniture/list/${userid}`,
+        {
+          method: "GET", // ⚠️ keep GET if backend requires
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            page: page,
+            limit: limit,
+            search: debouncedSearch,
+            sort_by: sort_by,
+            sort_order: sort_order,
+            listing_type: activeTab // ✅ FIXED KEY
+          })
+        }
       );
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data?.data) {
-      setFurnitureList(data.data);
-      setTotal(data.pagination.total);
-      setError("");
+      if (data?.data) {
+        setFurnitureList(data.data);
+        setTotal(data.pagination.total);
+        setError("");
+      }
+
+    } catch (error) {
+      console.error(error);
+      setError("Failed to fetch furniture");
     }
+  };
 
-  } catch (error) {
-    console.error(error);
-    setError("Failed to fetch furniture");
-  }
-};
-
+  
   const fetchUserDetails = async (userId: string) => {
     // Return from cache if available
     if (userDetails[userId]) {
