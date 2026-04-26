@@ -185,7 +185,7 @@ async def add(request: Request, files: List[UploadFile] = File(...)):
 # Path : https://furnspace.onrender.com/api/v1/furniture/list/{user_id}
 # Default Port : 10007
 
-@router.get("/list/{user_id}")
+@router.post("/list/{user_id}")
 async def list_furniture(user_id: str, request: Request):
 
     try:

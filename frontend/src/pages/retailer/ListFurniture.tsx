@@ -52,7 +52,7 @@ function ListFurniture(): React.ReactElement {
   const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
   const [imageURL, setImageURL] = useState<string>('');
   const [, setFile] = useState<File | null>(null);
-  const [activeTab, setActiveTab] = useState<'sale' | 'rent' | 'all'>('sale');
+  const [activeTab, setActiveTab] = useState<'buy' | 'rent' | 'all'>('all');
   const [files, setFiles] = useState<File[]>([]);
   
   const [sortOption, setSortOption] = useState<string>('default');
@@ -76,43 +76,42 @@ function ListFurniture(): React.ReactElement {
     try {
       setError("Loading furniture...");
 
-      let userid = localStorage.getItem('token');
+      const userid = localStorage.getItem("token");
+      if (!userid) {
+        setError("User not found");
+        return;
+      }
 
       const { sort_by, sort_order } = getSortParams();
 
-      const response = await fetch(
+      const response = await axios.post(
         `https://furnspace.onrender.com/api/v1/furniture/list/${userid}`,
         {
-          method: "GET", // ⚠️ keep GET if backend requires
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            page: page,
-            limit: limit,
+          data: {
+            page,
+            limit,
             search: debouncedSearch,
-            sort_by: sort_by,
-            sort_order: sort_order,
-            listing_type: activeTab // ✅ FIXED KEY
-          })
+            sort_by,
+            sort_order,
+            listing_type: activeTab,
+          },
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
       );
 
-      const data = await response.json();
-
-      if (data?.data) {
-        setFurnitureList(data.data);
-        setTotal(data.pagination.total);
+      if (response.data?.data) {
+        setFurnitureList(response.data.data);
+        setTotal(response.data.pagination.total);
         setError("");
       }
-
     } catch (error) {
       console.error(error);
       setError("Failed to fetch furniture");
     }
   };
 
-  
   const fetchUserDetails = async (userId: string) => {
     // Return from cache if available
     if (userDetails[userId]) {
@@ -795,7 +794,7 @@ function ListFurniture(): React.ReactElement {
     return stars;
   };
 
-  function handleTabChange(tab: 'sale' | 'rent' | 'all') {
+  function handleTabChange(tab: 'buy' | 'rent' | 'all') {
     setActiveTab(tab);
   }
 
@@ -820,44 +819,34 @@ function ListFurniture(): React.ReactElement {
                 </h2>
               </div>
               
-              <div className="flex flex-col md:flex-row w-full lg:w-auto gap-4">
-                <div className="flex items-center min-w-[200px]">
-                  <div className="relative w-full">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FiFilter className="text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search furniture..."
-                      value={search}
-                      onChange={(e) => {
-                        setSearch(e.target.value);
-                        setPage(1); // reset page
-                      }}
-                      className="px-4 py-2 border rounded-lg"
-                    />
-                    <select
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      value={sortOption}
-                      onChange={(e) => setSortOption(e.target.value)}
-                    >
-                        <option value="date_desc">Newest</option>
-                        <option value="date_asc">Oldest</option>
-
-                        <option value="title_asc">Title A-Z</option>
-                        <option value="title_desc">Title Z-A</option>
-
-                        <option value="category_asc">Category A-Z</option>
-                        <option value="category_desc">Category Z-A</option>
-
-                        <option value="price_asc">Price Low → High</option>
-                        <option value="price_desc">Price High → Low</option>
-
-                        <option value="rent_asc">Rent Low → High</option>
-                        <option value="rent_desc">Rent High → Low</option>
-                    </select>
-                  </div>
+              <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+                <div className="relative w-full sm:w-72">
+                  <FiFilter className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search furniture..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
                 </div>
+
+                <select
+                  className="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                >
+                  <option value="date_desc">Newest</option>
+                  <option value="date_asc">Oldest</option>
+                  <option value="title_asc">Title A-Z</option>
+                  <option value="title_desc">Title Z-A</option>
+                  <option value="category_asc">Category A-Z</option>
+                  <option value="category_desc">Category Z-A</option>
+                  <option value="price_asc">Price Low → High</option>
+                  <option value="price_desc">Price High → Low</option>
+                  <option value="rent_asc">Rent Low → High</option>
+                  <option value="rent_desc">Rent High → Low</option>
+                </select>
               </div>
             </div>
             
@@ -880,11 +869,11 @@ function ListFurniture(): React.ReactElement {
                 </button>
                 <button
                   className={`px-6 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 ${
-                    activeTab === 'sale'
+                    activeTab === 'buy'
                       ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
                       : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
                   }`}
-                  onClick={() => handleTabChange('sale')}
+                  onClick={() => handleTabChange('buy')}
                 >
                   <div className="flex items-center">
                     <FiShoppingBag className="mr-1.5" />

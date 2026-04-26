@@ -84,35 +84,34 @@ class Furniture(BaseModel):
             # -------------------------
             # BASE QUERY
             # -------------------------
-            query = {
-                "created_by": user_id,
-                "status": "approved"
-            }
+            filters = []
 
-            # -------------------------
-            # LISTING TYPE FILTER
-            # -------------------------
             if listing_type == "buy":
-                query["is_for_sale"] = True
-
+                filters.append({"is_for_sale": True})
             elif listing_type == "rent":
-                query["is_for_rent"] = True
-
+                filters.append({"is_for_rent": True})
             else:
-                query["$or"] = [
-                    {"is_for_sale": True},
-                    {"is_for_rent": True}
-                ]
+                filters.append({
+                    "$or": [
+                        {"is_for_sale": True},
+                        {"is_for_rent": True}
+                    ]
+                })
 
-            # -------------------------
-            # SEARCH FILTER (FIXED)
-            # -------------------------
             if search:
-                    query["$or"] = [
+                filters.append({
+                    "$or": [
                         {"title": {"$regex": search, "$options": "i"}},
                         {"description": {"$regex": search, "$options": "i"}},
                         {"category": {"$regex": search, "$options": "i"}}
                     ]
+                })
+
+            query = {
+                "created_by": user_id,
+                "status": "approved",
+                "$and": filters
+            }
                 
 
             # -------------------------
