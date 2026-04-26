@@ -474,7 +474,8 @@ async def list_all_furniture(request: Request):
             "sort_by": body.get("sort_by", "created_at"),
             "order": body.get("order", body.get("sort_order", "desc")),  
             "search": body.get("search", ""),
-            "listing_type": body.get("listing_type", "all")
+            "listing_type": body.get("listing_type", "all"),
+            "title": body.get("title", "")
         }
 
         result = Furniture.get_all_furniture(query_params)

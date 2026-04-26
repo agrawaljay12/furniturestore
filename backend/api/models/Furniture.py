@@ -382,12 +382,12 @@ class Furniture(BaseModel):
     def get_all_furniture(query_params: dict):
         try:
             search = query_params.get("search", "")
+            title = query_params.get("title", "")
             sort_by = query_params.get("sort_by", "created_at")
             order = query_params.get("order", "desc").lower()
             page = int(query_params.get("page", 1))
             limit = int(query_params.get("limit", 10))
             listing_type = query_params.get("listing_type", "all")
-
             query = {"status": "approved"}
 
             # FILTER
@@ -402,6 +402,10 @@ class Furniture(BaseModel):
                     {"is_for_sale": True},
                     {"is_for_rent": True}
             ]
+            
+            # title filter
+            if title:
+                query["title"] = {"$regex": title.strip(), "$options": "i"}
 
             # SEARCH
             if search:

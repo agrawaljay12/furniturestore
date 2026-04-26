@@ -34,53 +34,61 @@ function bdroom(): React.ReactElement {
   const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
   const [imageURL, setImageURL] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
-  const [activeTab, setActiveTab] = useState<'sale' | 'rent'>('sale');
+   const [activeTab, setActiveTab] = useState<'buy' | 'rent' | 'all'>('all');
 
-  useEffect(() => {
-    const fetchFurniture = async () => {
-      const token = localStorage.getItem("token"); // Assuming the auth token is stored in localStorage.
+  const [search, setSearch] = useState<string>('');
+  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState<number>(1);
+  const [limit] = useState<number>(100);
 
-      if (!token) {
-        setError("Token is missing. Please log in again.");
-        return;
-      }
+ const fetchFurniture = async () => {
+  const token = localStorage.getItem("token");
 
-      try {
-        let headersList = {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        };
+  if (!token) {
+    setError("Token is missing. Please log in again.");
+    return;
+  }
 
-        let bodyContent = JSON.stringify({
-          page: 1,
-          page_size: 100,
-          sort_by: "price",
-          sort_order: "asc",
-          search: "",
-          title: "bedroom" // Fetch only bedroom furniture
-        });
+  try {
+    setError('');
 
-        let response = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", {
-          method: "POST",
-          body: bodyContent,
-          headers: headersList
-        });
-
-        let data = await response.json();
-
-        if (data && data.data) {
-          setFurnitureList(data.data);
-        } else {
-          setError("Failed to fetch furniture data.");
-        }
-      } catch (err) {
-        console.error("Error fetching furniture data:", err);
-        setError("Failed to fetch furniture data. Please check your connection or API.");
-      }
+    const payload = {
+      page,
+      limit,
+      sort_by: sortBy,
+      order,
+      search,
+      title: "bedroom",
+      listing_type: activeTab === "buy" ? "buy" : "rent",
     };
 
-    fetchFurniture();
-  }, []);
+    const response = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result?.data?.items) {
+      setFurnitureList(result.data.items);
+    } else {
+      setFurnitureList([]);
+      setError(result?.message || "Failed to fetch furniture data.");
+    }
+  } catch (err) {
+    console.error("Error fetching furniture data:", err);
+    setError("Failed to fetch furniture data. Please check your connection or API.");
+  }
+};
+
+useEffect(() => {
+  fetchFurniture();
+}, [search, sortBy, order, page, activeTab]);
 
   // Handle file changes for image upload
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -221,8 +229,9 @@ function bdroom(): React.ReactElement {
   }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
 
   // Handle tab switching
-  const handleTabChange = (tab: 'sale' | 'rent') => {
+  const handleTabChange = (tab: 'buy' | 'rent') => {
     setActiveTab(tab);
+    setPage(1);
   };
 
   const sliderSettings = {
@@ -375,17 +384,53 @@ function bdroom(): React.ReactElement {
                 </div>
               )}
               
+              <div className="w-full md:w-80">
+                <input
+                  type="text"
+                  placeholder="Search bedroom furniture..."
+                  value={search}
+                  onChange={(e) => {
+                    setPage(1);
+                    setSearch(e.target.value);
+                  }}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div className="flex gap-3 w-full md:w-auto">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-4 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="created_at">Newest</option>
+                    <option value="price">Price</option>
+                    <option value="title">Title</option>
+                    <option value="category">Category</option>
+                    <option value="rent_price">Rent Price</option>
+                  </select>
+
+                  <select
+                    value={order}
+                    onChange={(e) => setOrder(e.target.value as 'asc' | 'desc')}
+                    className="px-4 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                </div>
+
               {/* Filters section */}
               <div className="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0">
                 {/* Enhanced Tab Navigation */}
                 <div className="flex w-full md:w-auto mb-4 md:mb-0 rounded-lg overflow-hidden shadow-sm">
                   <button
                     className={`px-6 py-3 text-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2 ${
-                      activeTab === 'sale'
+                      activeTab === 'buy'
                         ? 'bg-gradient-to-r from-teal-600 to-emerald-500 text-white shadow-md'
                         : 'bg-white text-slate-700 hover:bg-slate-50'
                     }`}
-                    onClick={() => handleTabChange('sale')}
+                    onClick={() => handleTabChange('buy')}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -422,13 +467,13 @@ function bdroom(): React.ReactElement {
                       {category}
                     </h3>
                     
-                    {activeTab === 'sale' && groupedFurniture[category].forSale.length > 0 && (
+                    {activeTab === 'buy' && groupedFurniture[category].forSale.length > 0 && (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {groupedFurniture[category].forSale.map((furniture) => renderFurnitureCard(furniture, 'sale'))}
                       </div>
                     )}
                     
-                    {activeTab === 'sale' && groupedFurniture[category].forSale.length === 0 && (
+                    {activeTab === 'buy' && groupedFurniture[category].forSale.length === 0 && (
                       <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
                         <div className="flex">
                           <div className="flex-shrink-0">
