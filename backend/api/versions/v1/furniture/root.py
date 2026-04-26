@@ -186,35 +186,46 @@ async def add(request: Request, files: List[UploadFile] = File(...)):
 # Default Port : 10007
 
 @router.get("/list/{user_id}")
-async def list_furniture(
-    user_id: str,
-    limit: int = Query(10),
-    page: int = Query(1),
-    search: str = Query(""),
-    sort_by: str = Query("created_at"),
-    sort_order: str = Query("desc", alias="order"),
-    listing_type: str = Query("all")
-):
+async def list_furniture(request: Request):
+
     try:
-        query_param = {
-            "limit": limit,
-            "page": page,
-            "search": search,
-            "sort_by": sort_by,
-            "sort_order": sort_order,
-            "listing_type": listing_type
+        body = await request.json()
+
+        query_params = {
+            "page": int(body.get("page", 1)),
+            "limit": int(body.get("limit", body.get("page_size", 10))), 
+            "sort_by": body.get("sort_by", "created_at"),
+            "sort_order": body.get("sort_order", body.get("sort_order", "desc")),  
+            "search": body.get("search", ""),
+            "listing_type": body.get("listing_type", "all")
         }
 
-        result = Furniture.get_furniture(user_id, query_param)
+        result = Furniture.get_all_furniture(query_params)
 
-        return {
-            "status": 200,
-            "data": result["data"],
-            "pagination": result["pagination"]
-        }
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "status": 200,
+                "status_message": "OK",
+                "data": result["data"],
+                "pagination": result["pagination"]   
+            }
+        )
+
+    except HTTPException as http_exc:
+        raise http_exc
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("Router Error:", e)
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": 500,
+                "status_message": "Internal Server Error",
+                "data": {"message": str(e)}
+            }
+        )
 
 
 # Request Type : POST
