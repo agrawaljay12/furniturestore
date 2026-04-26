@@ -751,8 +751,8 @@ const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => 
                         }}
                         className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
-                        <option value="created_at_desc">Newest First</option>
-                        <option value="created_at_asc">Oldest First</option>
+                        <option value="created_at_asc">Newest First</option>
+                        <option value="created_at_desc">Oldest First</option>
 
                         <option value="price_asc">Price: Low → High</option>
                         <option value="price_desc">Price: High → Low</option>
