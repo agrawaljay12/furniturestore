@@ -410,7 +410,7 @@ class Furniture(BaseModel):
 
             elif listing_type == "rent":
                 query["is_for_rent"] = True
-                
+
             else:
                 query["$or"] = [
                     {"is_for_sale": True},
@@ -452,8 +452,18 @@ class Furniture(BaseModel):
                     furniture["created_at"] = furniture["created_at"].isoformat()
 
                 # SAFE NORMALIZATION
-                furniture["price"] = float(furniture.get("price", 0))
-                furniture["rent_price"] = float(furniture.get("rent_price", 0))
+                def safe_float(value):
+                    if isinstance(value, (int, float)):
+                        return float(value)
+                    if isinstance(value, str) and value.strip() != "":
+                        try:
+                            return float(value)
+                        except ValueError:
+                            return 0.0
+                    return 0.0
+
+                furniture["price"] = safe_float(furniture.get("price"))
+                furniture["rent_price"] = safe_float(furniture.get("rent_price"))
 
                 # CRITICAL FIX
                 furniture["is_for_sale"] = bool(furniture.get("is_for_sale", False))
