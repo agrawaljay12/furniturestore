@@ -43,7 +43,9 @@ interface Product {
 
 const BuyPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]); // List all products
-  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]); // Paginated products
+  // const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]); // Paginated products
+  
+  // state for pagination, sorting, and filtering
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10); // 12 cards per page
@@ -51,6 +53,7 @@ const BuyPage: React.FC = () => {
   const [sortBy, setSortBy] = useState("price");
   const [sortOrder, setSortOrder] = useState("asc");
   const [showSortOptions, setShowSortOptions] = useState(false); // Added for dropdown toggle
+  
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
@@ -76,36 +79,52 @@ const BuyPage: React.FC = () => {
   
   // Function to handle sorting
   const handleSort = (newSortBy: string) => {
+    let newOrder = "asc";
+
     if (sortBy === newSortBy) {
-      // Toggle sort order if clicking the same field
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      // Set new sort field and default to ascending
-      setSortBy(newSortBy);
-      setSortOrder("asc");
+      // Toggle order
+      newOrder = sortOrder === "asc" ? "desc" : "asc";
     }
-    
+
+    setSortBy(newSortBy);
+    setSortOrder(newOrder);
+
     setShowSortOptions(false);
-    setPage(1); // Reset to first page when sorting changes
-    logUserActivity(`Sorted products by ${newSortBy} in ${sortOrder === "asc" ? "ascending" : "descending"} order`);
+    setPage(1);
+
+    logUserActivity(
+      `Sorted products by ${newSortBy} in ${
+        newOrder === "asc" ? "ascending" : "descending"
+      } order`
+    );
   };
   
   // Function to get sort display text
   const getSortDisplayText = () => {
-    const field = sortBy.charAt(0).toUpperCase() + sortBy.slice(1);
+    const map: Record<string, string> = {
+      price: "Price",
+      title: "Name",
+      category: "Category",
+      created_at: "Date Added",
+    };
+
+    const field = map[sortBy] || sortBy;
     const order = sortOrder === "asc" ? "Low to High" : "High to Low";
+
     return `${field}: ${order}`;
   };
   
   useEffect(() => {
     const fetchProducts = async () => {
       const headersList = { "Content-Type": "application/json" };
+
       const bodyContent = JSON.stringify({
-        page,
-        page_size: 100, // Fetching all products at once for pagination
+        page: page,
+        limit: pageSize, // 🔥 IMPORTANT
         sort_by: sortBy,
-        sort_order: sortOrder,
+        order: sortOrder,
         search: searchQuery,
+        listing_type: "buy", // 🔥 IMPORTANT
       });
 
       try {
@@ -121,12 +140,8 @@ const BuyPage: React.FC = () => {
         const data = await response.json();
 
         if (data && data.data) {
-          // Filter to only include approved items where is_for_sale is true
-          const filteredProducts = data.data.filter((product: Product) => 
-            product.is_for_sale === true && 
-            product.status === "approved"
-          );
-          setProducts(filteredProducts);
+          setProducts(data.data); // ✅ DIRECT
+          setTotalPages(data.pagination.total_pages); // ✅ FROM BACKEND
         }
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -134,17 +149,17 @@ const BuyPage: React.FC = () => {
     };
 
     fetchProducts();
-  }, [searchQuery, sortBy, sortOrder]);
+  }, [page, searchQuery, sortBy, sortOrder]);
 
-  useEffect(() => {
-    // Paginate the fetched products
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setDisplayedProducts(products.slice(startIndex, endIndex));
+  // useEffect(() => {
+  //   // Paginate the fetched products
+  //   const startIndex = (page - 1) * pageSize;
+  //   const endIndex = startIndex + pageSize;
+  //   setDisplayedProducts(products.slice(startIndex, endIndex));
 
-    // Set total pages
-    setTotalPages(Math.ceil(products.length / pageSize));
-  }, [products, page, pageSize]);
+  //   // Set total pages
+  //   setTotalPages(Math.ceil(products.length / pageSize));
+  // }, [products, page, pageSize]);
 
   useEffect(() => {
     const userId = localStorage.getItem("token");
@@ -699,11 +714,13 @@ const BuyPage: React.FC = () => {
               Sort Options
             </h3>
             
-            {[
-              { id: "price", label: "Price", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 011-16 8 8 0116 0zm-7-4a1 1 11-2 0 1 1 012 0z" },
-              { id: "title", label: "Name", icon: "M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" },
-              { id: "created_at", label: "Date Added", icon: "M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0121 7.5v11.25m-18 0A2.25 2.25 005.25 21h13.5A2.25 2.25 0021 18.75m-18 0v-7.5A2.25 2.25 015.25 9h13.5A2.25 2.25 0121 11.25v7.5" }
-            ].map((option) => (
+        {
+          [
+            { id: "price", label: "Price", icon: "M12 8c..." },
+            { id: "category", label: "Category", icon: "M3 7h18M3 12h18M3 17h18" }, // ✅ NEW
+            { id: "title", label: "Name", icon: "M7.5 8.25h9..." },
+            { id: "created_at", label: "Newest", icon: "M6.75 3v2.25..." }
+          ].map((option) => (
               <div key={option.id} className="px-1">
             <button
               className={`w-full text-left px-4 py-3 flex justify-between items-center hover:bg-gray-50 rounded-md ${sortBy === option.id ? 'text-yellow-600 font-medium' : 'text-gray-700'}`}
@@ -751,7 +768,7 @@ const BuyPage: React.FC = () => {
 
         {/* Product Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mt-8 px-4">
-          {displayedProducts.map((product, index) => (
+          {products.map((product, index) => (
             <div
               key={product._id}
               className="bg-white rounded-xl shadow-md overflow-hidden w-full h-full flex flex-col cursor-pointer card-hover"
@@ -833,7 +850,7 @@ const BuyPage: React.FC = () => {
           <div className="mt-10 relative">
             <div className="overflow-x-auto py-4 px-6 hide-scrollbar">
               <div className="flex justify-center space-x-4">
-                {displayedProducts.slice(0, 5).map((product) => (
+                {products.slice(0, 5).map((product) => (
                   <div 
                     key={product._id}
                     className="flex-shrink-0 w-64 bg-white rounded-xl shadow-lg overflow-hidden card-hover"
