@@ -142,7 +142,7 @@ function bdroom(): React.ReactElement {
         setImageURL('');
         setEditingImageIndex(null);
 
-        alert("Image replaced successfully!");
+        alert("furniture update successfully!");
       }
     } catch (err) {
       console.error(err);
