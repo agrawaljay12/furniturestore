@@ -5,6 +5,7 @@ import Slider from 'react-slick';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import axios from 'axios';
+import { FiFilter } from 'react-icons/fi';
 
 interface Furniture {
   _id: string;
@@ -29,66 +30,65 @@ function bdroom(): React.ReactElement {
   const [furnitureList, setFurnitureList] = useState<Furniture[]>([]);
   const [selectedFurniture, setSelectedFurniture] = useState<Furniture | null>(null);
   const [editMode, setEditMode] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
   const [imageURL, setImageURL] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
-   const [activeTab, setActiveTab] = useState<'buy' | 'rent' | 'all'>('all');
-
+   
+  const [activeTab, setActiveTab] = useState<'buy' | 'rent' | 'all'>('all');
   const [search, setSearch] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState<number>(1);
-  const [limit] = useState<number>(100);
+  const [limit] = useState<number>(10);
+  const [totalPages, setTotalPages] = useState(1);
 
- const fetchFurniture = async () => {
-  const token = localStorage.getItem("token");
+  // State for handling messages
+  const [error, setError] = useState<string>('');
+  const [, setLoadingMsg] = useState<string>(''); 
 
-  if (!token) {
-    setError("Token is missing. Please log in again.");
-    return;
-  }
+ 
+  const fetchProduct = async () => {
+    try {
+      setLoadingMsg("Loading furniture...");
 
-  try {
-    setError('');
+      const response = await axios.post(
+        "https://furnspace.onrender.com/api/v1/furniture/list_all",
+        {
+          page: page,
+          limit: limit,
+          sort_by: sortBy,
+          order: order,
+          search: search,
+          listing_type: activeTab,
+          title: "bedroom" 
+        }
+      );
 
-    const payload = {
-      page,
-      limit,
-      sort_by: sortBy,
-      order,
-      search,
-      title: "bedroom",
-      listing_type: activeTab === "buy" ? "buy" : "rent",
-    };
+      if (response.data?.data) {
+        setFurnitureList(response.data.data);
+        setTotalPages(response.data.pagination?.total_pages || 1);
+      } else {
+        setFurnitureList([]);
+      }
 
-    const response = await fetch("https://furnspace.onrender.com/api/v1/furniture/list_all", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const result = await response.json();
-
-    if (response.ok && result?.data?.items) {
-      setFurnitureList(result.data.items);
-    } else {
-      setFurnitureList([]);
-      setError(result?.message || "Failed to fetch furniture data.");
+    } catch (error) {
+      console.error(error);
+      setError("Failed to fetch furniture");
+    } finally {
+      setLoadingMsg('');
     }
-  } catch (err) {
-    console.error("Error fetching furniture data:", err);
-    setError("Failed to fetch furniture data. Please check your connection or API.");
-  }
-};
+  };
 
 useEffect(() => {
-  fetchFurniture();
+  const delay = setTimeout(() => {
+    fetchProduct();
+  }, 500);
+
+  return () => clearTimeout(delay);
 }, [search, sortBy, order, page, activeTab]);
+
 
   // Handle file changes for image upload
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -215,21 +215,21 @@ useEffect(() => {
   };
 
   // Group furniture by category and then by sale/rent status
-  const groupedFurniture = furnitureList.reduce((acc, furniture) => {
-    if (!acc[furniture.category]) {
-      acc[furniture.category] = { forSale: [], forRent: [] };
-    }
-    if (furniture.is_for_sale) {
-      acc[furniture.category].forSale.push(furniture);
-    }
-    if (furniture.is_for_rent) {
-      acc[furniture.category].forRent.push(furniture);
-    }
-    return acc;
-  }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
+  // const groupedFurniture = furnitureList.reduce((acc, furniture) => {
+  //   if (!acc[furniture.category]) {
+  //     acc[furniture.category] = { forSale: [], forRent: [] };
+  //   }
+  //   if (furniture.is_for_sale) {
+  //     acc[furniture.category].forSale.push(furniture);
+  //   }
+  //   if (furniture.is_for_rent) {
+  //     acc[furniture.category].forRent.push(furniture);
+  //   }
+  //   return acc;
+  // }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
 
   // Handle tab switching
-  const handleTabChange = (tab: 'buy' | 'rent') => {
+  const handleTabChange = (tab: 'buy' | 'rent'| 'all') => {
     setActiveTab(tab);
     setPage(1);
   };
@@ -384,41 +384,96 @@ useEffect(() => {
                 </div>
               )}
               
-              <div className="w-full md:w-80">
-                <input
-                  type="text"
-                  placeholder="Search bedroom furniture..."
-                  value={search}
-                  onChange={(e) => {
-                    setPage(1);
-                    setSearch(e.target.value);
-                  }}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
+              <div className="w-full flex flex-col md:flex-row items-center gap-4">
 
-              <div className="flex gap-3 w-full md:w-auto">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="px-4 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
-                    <option value="created_at">Newest</option>
-                    <option value="price">Price</option>
-                    <option value="title">Title</option>
-                    <option value="category">Category</option>
-                    <option value="rent_price">Rent Price</option>
-                  </select>
+                  {/* 🔍 SEARCH BAR */}
+                  <div className="relative w-full md:w-80">
+                    <input
+                      type="text"
+                      placeholder="Search furniture..."
+                      value={search}
+                      onChange={(e) => {
+                        setPage(1);
+                        setSearch(e.target.value);
+                      }}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 
+                      bg-white dark:bg-slate-800 text-sm text-gray-700 dark:text-white 
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    />
 
-                  <select
-                    value={order}
-                    onChange={(e) => setOrder(e.target.value as 'asc' | 'desc')}
-                    className="px-4 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
-                    <option value="desc">Descending</option>
-                    <option value="asc">Ascending</option>
-                  </select>
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      <FiFilter size={16} />
+                    </div>
+                  </div>
+
+                  
+
+                  {/* 🔽 SORT DROPDOWN */}
+                  <div className="w-full md:w-72">
+
+                    <div className="text-sm text-gray-500">
+                      Sorted by: 
+                      <span className="font-semibold text-indigo-600 ml-1">
+                        {sortBy.replace("_", " ")} ({order})
+                      </span>
+                    </div>  
+
+                    <select
+                      value={`${sortBy}_${order}`}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const lastUnderscoreIndex = value.lastIndexOf("_");
+
+                        const field = value.substring(0, lastUnderscoreIndex);
+                        const dir = value.substring(lastUnderscoreIndex + 1);
+
+                        setPage(1);
+                        setSortBy(field);
+                        setOrder(dir as "asc" | "desc"); // ✅ FIXED (capital O)
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 
+                      bg-white dark:bg-slate-800 text-sm text-gray-700 dark:text-white 
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm cursor-pointer"
+                    >
+                      {/* ✅ CORRECTED SORTING */}
+                      <option value="created_at_desc">Newest First</option>
+                      <option value="created_at_asc">Oldest First</option>
+
+                      <option value="price_asc">Price: Low → High</option>
+                      <option value="price_desc">Price: High → Low</option>
+
+                      <option value="rent_price_asc">Rent: Low → High</option>
+                      <option value="rent_price_desc">Rent: High → Low</option>
+
+                      <option value="title_asc">Title: A → Z</option>
+                      <option value="title_desc">Title: Z → A</option>
+
+                      <option value="category_asc">Category: A → Z</option>
+                      <option value="category_desc">Category: Z → A</option>
+                    </select>
+                  </div>
+
                 </div>
+              <div className="flex justify-center mt-8 space-x-2">
+                <button
+                  disabled={page === 1}
+                  className={`px-4 py-2 rounded ${page === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
+                >
+                  Prev
+                </button>
+
+                <span className="px-4 py-2">
+                  Page {page} of {totalPages}
+                </span>
+
+                <button
+                  disabled={page === totalPages}
+                  onClick={() => setPage((prev) => prev + 1)}
+                  className="px-4 py-2 bg-gray-300 rounded"
+                >
+                  Next
+                </button>
+              </div>
 
               {/* Filters section */}
               <div className="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0">
@@ -454,71 +509,23 @@ useEffect(() => {
               </div>
             </div>
 
-            {Object.keys(groupedFurniture).length > 0 ? (
-              <div className="space-y-12">
-                {Object.keys(groupedFurniture).map((category) => (
-                  <div key={category} className="bg-white p-6 rounded-lg shadow-md transition duration-300 hover:shadow-lg">
-                    <h3 className="text-2xl font-bold text-slate-800 mb-6 pb-2 border-b border-slate-300 flex items-center">
-                      <span className="bg-teal-100 text-teal-800 p-1 w-8 h-8 rounded-full inline-flex items-center justify-center mr-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                      </span>
-                      {category}
-                    </h3>
-                    
-                    {activeTab === 'buy' && groupedFurniture[category].forSale.length > 0 && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {groupedFurniture[category].forSale.map((furniture) => renderFurnitureCard(furniture, 'sale'))}
-                      </div>
-                    )}
-                    
-                    {activeTab === 'buy' && groupedFurniture[category].forSale.length === 0 && (
-                      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-                        <div className="flex">
-                          <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm text-yellow-700">No furniture available for sale in this category.</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeTab === 'rent' && groupedFurniture[category].forRent.length > 0 && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {groupedFurniture[category].forRent.map((furniture) => renderFurnitureCard(furniture, 'rent'))}
-                      </div>
-                    )}
-                    
-                    {activeTab === 'rent' && groupedFurniture[category].forRent.length === 0 && (
-                      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-                        <div className="flex">
-                          <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm text-yellow-700">No furniture available for rent in this category.</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+            {furnitureList.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {furnitureList
+                  .filter((item) => {
+                    if (activeTab === "buy") return item.is_for_sale;
+                    if (activeTab === "rent") return item.is_for_rent;
+                    return true; // for "all"
+                  })
+                  .map((furniture) =>
+                    renderFurnitureCard(
+                      furniture,
+                      furniture.is_for_sale ? "sale" : "rent"
+                    )
+                  )}
               </div>
             ) : (
-              <div className="bg-white p-12 rounded-lg shadow-md text-center">
-                <svg className="mx-auto h-16 w-16 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-                <h3 className="mt-2 text-lg font-medium text-slate-900">No furniture found</h3>
-                <p className="mt-1 text-sm text-slate-500">Try changing your search filters or check back later for new listings.</p>
-              </div>
+              <p className="text-center text-gray-500">No furniture found.</p>
             )}
           </section>
         </main>

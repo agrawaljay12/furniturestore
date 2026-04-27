@@ -388,32 +388,45 @@ class Furniture(BaseModel):
             page = int(query_params.get("page", 1))
             limit = int(query_params.get("limit", 10))
             listing_type = query_params.get("listing_type", "all")
+
             query = {"status": "approved"}
 
-            # FILTER
+            filters = []
+
+            # LISTING TYPE FILTER
             if listing_type == "buy":
-                query["is_for_sale"] = True
+                filters.append({"is_for_sale": True})
 
             elif listing_type == "rent":
-                query["is_for_rent"] = True
+                filters.append({"is_for_rent": True})
 
             else:
-                query["$or"] = [
-                    {"is_for_sale": True},
-                    {"is_for_rent": True}
-            ]
-            
-            # title filter
-            if title:
-                query["title"] = {"$regex": title.strip(), "$options": "i"}
+                filters.append({
+                    "$or": [
+                        {"is_for_sale": True},
+                        {"is_for_rent": True}
+                    ]
+                })
 
-            # SEARCH
+            # TITLE FILTER
+            if title:
+                filters.append({
+                    "title": {"$regex": title.strip(), "$options": "i"}
+                })
+
+            # SEARCH FILTER
             if search:
-                query["$or"] = [
-                    {"title": {"$regex": search, "$options": "i"}},
-                    {"description": {"$regex": search, "$options": "i"}},
-                    {"category": {"$regex": search, "$options": "i"}}
-                ]
+                filters.append({
+                    "$or": [
+                        {"title": {"$regex": search, "$options": "i"}},
+                        {"description": {"$regex": search, "$options": "i"}},
+                        {"category": {"$regex": search, "$options": "i"}}
+                    ]
+                })
+
+            # 🔹 COMBINE ALL FILTERS
+            if filters:
+                query["$and"] = filters
 
             # SORT VALIDATION
             allowed_sort_fields = ["price", "rent_price", "created_at", "title", "category"]
