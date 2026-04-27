@@ -112,74 +112,69 @@ useEffect(() => {
       return;
     }
 
-     const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
+    const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
 
-     const formDataToSend = new FormData();
+    const formData = new FormData();
 
-     const payload: any = {
-        ...selectedFurniture,
-        furniture_id: selectedFurniture._id,
-      };
-
-      // ✅ SEND replace_indexes (CRITICAL)
-      if (editingImageIndex !== null) {
-        payload.replace_indexes = [editingImageIndex];
-      }
-
-      formDataToSend.append("data", JSON.stringify(payload));
-
-      if (file) {
-        formDataToSend.append("files", file);
-      }
-
-      try {
-        const response = await axios.post(url, formDataToSend, {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        });
-
-        if (response.status === 200) {
-
-          await fetchProduct(); // ✅ sync from backend
-
-          // ✅ RESET STATE
-          setSelectedFurniture(null);
-          setEditMode(false);
-          setFile(null);
-          setImageURL('');
-          setEditingImageIndex(null);
-
-          alert("Image replaced successfully!");
-        }
-
-      } catch (error) {
-        console.error(error);
-        alert("Update failed");
-      }
+    const payload: any = {
+      furniture_id: selectedFurniture._id,
+      ...selectedFurniture,
     };
 
-  const handleImageClick = (index: number | null = null) => {
-    setEditingImageIndex(index);   // ✅ set index to replace
-    setImageURL('');               // reset preview
-    setFile(null);                 // reset old file
+    // ✅ CRITICAL: send replace index
+    if (editingImageIndex !== null) {
+      payload.replace_indexes = [editingImageIndex];
+    }
 
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+    formData.append("data", JSON.stringify(payload));
+
+    if (file) {
+      formData.append("files", file);
+    }
+
+    try {
+      const res = await axios.post(url, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      if (res.status === 200) {
+        await fetchProduct(); // ✅ always reload from backend
+
+        // ✅ reset state
+        setSelectedFurniture(null);
+        setEditMode(false);
+        setFile(null);
+        setImageURL('');
+        setEditingImageIndex(null);
+
+        alert("Image replaced successfully!");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Update failed");
     }
   };
 
-  // Handle file changes for image upload
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    const selectedFile = event.target.files?.[0];
+  const handleImageClick = (index?: number) => {
+    const finalIndex = index !== undefined ? index : 0;
 
+    setEditingImageIndex(finalIndex);
+    setFile(null);
+    setImageURL('');
+
+    fileInputRef.current?.click();
+  };
+
+  // Handle file changes for image upload
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
 
     setFile(selectedFile);
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setImageURL(reader.result as string); // preview only
+      setImageURL(reader.result as string);
     };
     reader.readAsDataURL(selectedFile);
   };
@@ -539,30 +534,22 @@ useEffect(() => {
                  <div className="flex flex-col md:flex-row">
                    <div className="md:w-1/2 pr-4 mb-4 md:mb-0">
                      {selectedFurniture.images && selectedFurniture.images.length > 0 ? (
-                       <Slider {...sliderSettings}>
-                         {selectedFurniture.images.map((img, index) => (
-                           <div key={index} className="relative">
-                            <img
-                              src={
-                                editingImageIndex === index && imageURL
-                                  ? imageURL   // ✅ show preview if replacing
-                                  : img
-                              }
-                              alt={selectedFurniture.title}
-                              className="w-full h-64 object-cover rounded cursor-pointer"
-                              onClick={() => handleImageClick(index)}
-                            />
-                             <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                               <span className="text-white bg-teal-600 p-2 rounded-full">
-                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                 </svg>
-                               </span>
-                             </div>
-                           </div>
-                         ))}
-                       </Slider>
+                        <Slider {...sliderSettings}>
+                          {selectedFurniture.images.map((img, index) => (
+                            <div key={index} className="relative">
+                              <img
+                                src={
+                                  editingImageIndex === index && imageURL
+                                    ? imageURL   // ✅ show preview
+                                    : img
+                                }
+                                alt={selectedFurniture.title}
+                                className="w-full h-64 object-cover rounded cursor-pointer"
+                                onClick={() => handleImageClick(index)}
+                              />
+                            </div>
+                          ))}
+                        </Slider>
                      ) : (
                        selectedFurniture.image && (
                          <div className="relative">
@@ -570,8 +557,15 @@ useEffect(() => {
                               src={imageURL || selectedFurniture.image}
                               alt={selectedFurniture.title}
                               className="w-full h-64 object-cover rounded cursor-pointer"
-                              onClick={() => handleImageClick(0)} // treat single image as index 0
+                              onClick={() => handleImageClick(0)} // ✅ treat as index 0
                             />
+
+                            {editingImageIndex !== null && (
+                              <p className="text-center text-sm text-orange-600 mt-2">
+                                Replacing image #{editingImageIndex + 1}
+                              </p>
+                            )}
+
                            <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
                              <span className="text-white bg-teal-600 p-2 rounded-full">
                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
