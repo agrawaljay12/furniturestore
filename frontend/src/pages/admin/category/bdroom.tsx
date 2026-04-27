@@ -120,6 +120,7 @@ useEffect(() => {
     if (!selectedFurniture) return;
 
     const user_id = localStorage.getItem('token');
+   
     if (!user_id) {
       setError("User ID is not found in local storage.");
       return;
@@ -128,15 +129,21 @@ useEffect(() => {
     const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
 
     const formDataToSend = new FormData();
-    formDataToSend.append("data", JSON.stringify({
+
+    const payload: any = {
       ...selectedFurniture,
-      user_id,
       furniture_id: selectedFurniture._id,
-      editing_image_index: editingImageIndex,
-    }));
+    };
+
+    // ✅ IMPORTANT: send replace_indexes
+    if (editingImageIndex !== null) {
+      payload.replace_indexes = [editingImageIndex];
+    }
+
+    formDataToSend.append("data", JSON.stringify(payload));
 
     if (file) {
-      formDataToSend.append("files", file, file.name);
+      formDataToSend.append("files", file);
     }
 
     try {
@@ -147,36 +154,23 @@ useEffect(() => {
       });
 
       if (response.status === 200) {
-        setFurnitureList((prevList) =>
-          prevList.map((item) => {
-            if (item._id === selectedFurniture._id) {
-              const updatedItem = { ...item, ...selectedFurniture };
-              if (editingImageIndex !== null && selectedFurniture.images) {
-                const updatedImages = [...selectedFurniture.images];
-                updatedImages[editingImageIndex] = imageURL;
-                updatedItem.images = updatedImages;
-              } else {
-                updatedItem.image = imageURL;
-              }
-              return updatedItem;
-            }
-            return item;
-          })
-        );
-        setSelectedFurniture(null); // Clear the selected furniture after update
+        await fetchProduct(); // ✅ sync fresh data
+
+        // ✅ reset states
+        setSelectedFurniture(null);
         setEditMode(false);
-        alert("Furniture details updated successfully!");
+        setFile(null);
+        setImageURL('');
+        setEditingImageIndex(null);
+
+        alert("Furniture updated successfully!");
       } else {
-        alert(response.data.message || "Failed to update furniture details.");
+        alert("Failed to update furniture");
       }
+
     } catch (error: any) {
-      console.error('There was an error updating the furniture data!', error);
-      if (error.response && error.response.data && error.response.data.detail) {
-        setError(error.response.data.detail || "Failed to save furniture details.");
-      } else {
-        setError("An error occurred while saving furniture details.");
-      }
-      alert('Failed to save furniture details.');
+      console.error(error);
+      alert("Update failed");
     }
   };
 
