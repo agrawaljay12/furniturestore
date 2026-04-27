@@ -454,57 +454,48 @@ useEffect(() => {
                   </div>
 
                 </div>
-              <div className="flex justify-center mt-8 space-x-2">
-                <button
-                  disabled={page === 1}
-                  className={`px-4 py-2 rounded ${page === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
-                >
-                  Prev
-                </button>
-
-                <span className="px-4 py-2">
-                  Page {page} of {totalPages}
-                </span>
-
-                <button
-                  disabled={page === totalPages}
-                  onClick={() => setPage((prev) => prev + 1)}
-                  className="px-4 py-2 bg-gray-300 rounded"
-                >
-                  Next
-                </button>
-              </div>
+              
 
               {/* Filters section */}
               <div className="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0">
                 {/* Enhanced Tab Navigation */}
-                <div className="flex w-full md:w-auto mb-4 md:mb-0 rounded-lg overflow-hidden shadow-sm">
-                  <button
-                    className={`px-6 py-3 text-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2 ${
-                      activeTab === 'buy'
-                        ? 'bg-gradient-to-r from-teal-600 to-emerald-500 text-white shadow-md'
-                        : 'bg-white text-slate-700 hover:bg-slate-50'
-                    }`}
-                    onClick={() => handleTabChange('buy')}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>For Sale</span>
-                  </button>
-                  <button
-                    className={`px-6 py-3 text-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2 ${
-                      activeTab === 'rent'
-                        ? 'bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-md'
-                        : 'bg-white text-slate-700 hover:bg-slate-50'
-                    }`}
-                    onClick={() => handleTabChange('rent')}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>For Rent</span>
-                  </button>
+                <div className="flex justify-center mb-6">
+                  <div className="flex rounded-xl overflow-hidden shadow-md border">
+                    
+                    <button
+                      className={`px-6 py-2 text-sm font-semibold transition ${
+                        activeTab === 'all'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                      }`}
+                      onClick={() => handleTabChange('all')}
+                    >
+                      All
+                    </button>
+
+                    <button
+                      className={`px-6 py-2 text-sm font-semibold transition ${
+                        activeTab === 'buy'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                      }`}
+                      onClick={() => handleTabChange('buy')}
+                    >
+                      For Sale
+                    </button>
+
+                    <button
+                      className={`px-6 py-2 text-sm font-semibold transition ${
+                        activeTab === 'rent'
+                          ? 'bg-orange-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                      }`}
+                      onClick={() => handleTabChange('rent')}
+                    >
+                      For Rent
+                    </button>
+
+                  </div>
                 </div>
               </div>
             </div>
@@ -528,6 +519,28 @@ useEffect(() => {
               <p className="text-center text-gray-500">No furniture found.</p>
             )}
           </section>
+
+          {/* pagination */}
+          <div className="flex justify-center mt-8 space-x-2">
+            <button
+              disabled={page === 1}
+              className={`px-4 py-2 rounded ${page === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
+            >
+              Prev
+            </button>
+
+            <span className="px-4 py-2">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage((prev) => prev + 1)}
+              className="px-4 py-2 bg-gray-300 rounded"
+            >
+              Next
+            </button>
+          </div>
         </main>
 
         {/* Preview / Edit Modal */}
