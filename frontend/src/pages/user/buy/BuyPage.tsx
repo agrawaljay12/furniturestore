@@ -122,7 +122,7 @@ const BuyPage: React.FC = () => {
         page: page,
         limit: pageSize, // 🔥 IMPORTANT
         sort_by: sortBy,
-        order: sortOrder,
+        sort_order: sortOrder,
         search: searchQuery,
         listing_type: "buy", // 🔥 IMPORTANT
       });
@@ -150,6 +150,15 @@ const BuyPage: React.FC = () => {
 
     fetchProducts();
   }, [page, searchQuery, sortBy, sortOrder]);
+
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      setPage(1);
+    }, 500);
+
+    return () => clearTimeout(delay);
+  }, [searchQuery]);
 
   // useEffect(() => {
   //   // Paginate the fetched products
@@ -747,13 +756,19 @@ const BuyPage: React.FC = () => {
                       <div className="mt-1 flex space-x-4">
                         <button
                           className={`px-3 py-1.5 rounded text-sm ${sortOrder === "asc" ? "bg-yellow-100 text-yellow-800 font-medium" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                          onClick={() => setSortOrder("asc")}
+                          onClick={() => {
+                              setSortOrder("asc");
+                              setPage(1); // trigger API refresh
+                            }}
                         >
                           Ascending
                         </button>
                         <button
                           className={`px-3 py-1.5 rounded text-sm ${sortOrder === "desc" ? "bg-yellow-100 text-yellow-800 font-medium" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                          onClick={() => setSortOrder("desc")}
+                          onClick={() => {
+                            setSortOrder("desc");
+                            setPage(1); // trigger API refresh
+                          }}
                         >
                           Descending
                         </button>
