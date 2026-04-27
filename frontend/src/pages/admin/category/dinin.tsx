@@ -515,11 +515,16 @@ return (
         {/* pagination */}
         <div className="flex justify-center mt-8 space-x-2">
           <button
-            disabled={page === 1}
-            className={`px-4 py-2 rounded ${page === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
-          >
-            Prev
-          </button>
+              disabled={page === 1}
+              onClick={() => setPage((prev) => prev - 1)}
+              className={`px-4 py-2 rounded ${
+                page === 1
+                  ? 'bg-gray-200 cursor-not-allowed'
+                  : 'bg-gray-300 hover:bg-gray-400'
+              }`}
+              >
+              Prev
+            </button>
 
           <span className="px-4 py-2">
             Page {page} of {totalPages}
