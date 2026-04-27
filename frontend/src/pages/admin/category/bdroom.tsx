@@ -90,21 +90,7 @@ useEffect(() => {
 }, [search, sortBy, order, page, activeTab]);
 
 
-  // Handle file changes for image upload
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    setFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImageURL(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
+  
 
   const handlePreview = (furniture: Furniture) => {
     setSelectedFurniture(furniture);
@@ -126,59 +112,76 @@ useEffect(() => {
       return;
     }
 
-    const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
+     const url = `https://furnspace.onrender.com/api/v1/furniture/update-furniture`;
 
-    const formDataToSend = new FormData();
+     const formDataToSend = new FormData();
 
-    const payload: any = {
-      ...selectedFurniture,
-      furniture_id: selectedFurniture._id,
-    };
+     const payload: any = {
+        ...selectedFurniture,
+        furniture_id: selectedFurniture._id,
+      };
 
-    // ✅ IMPORTANT: send replace_indexes
-    if (editingImageIndex !== null) {
-      payload.replace_indexes = [editingImageIndex];
-    }
-
-    formDataToSend.append("data", JSON.stringify(payload));
-
-    if (file) {
-      formDataToSend.append("files", file);
-    }
-
-    try {
-      const response = await axios.post(url, formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      });
-
-      if (response.status === 200) {
-        await fetchProduct(); // ✅ sync fresh data
-
-        // ✅ reset states
-        setSelectedFurniture(null);
-        setEditMode(false);
-        setFile(null);
-        setImageURL('');
-        setEditingImageIndex(null);
-
-        alert("Furniture updated successfully!");
-      } else {
-        alert("Failed to update furniture");
+      // ✅ SEND replace_indexes (CRITICAL)
+      if (editingImageIndex !== null) {
+        payload.replace_indexes = [editingImageIndex];
       }
 
-    } catch (error: any) {
-      console.error(error);
-      alert("Update failed");
-    }
-  };
+      formDataToSend.append("data", JSON.stringify(payload));
+
+      if (file) {
+        formDataToSend.append("files", file);
+      }
+
+      try {
+        const response = await axios.post(url, formDataToSend, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        });
+
+        if (response.status === 200) {
+
+          await fetchProduct(); // ✅ sync from backend
+
+          // ✅ RESET STATE
+          setSelectedFurniture(null);
+          setEditMode(false);
+          setFile(null);
+          setImageURL('');
+          setEditingImageIndex(null);
+
+          alert("Image replaced successfully!");
+        }
+
+      } catch (error) {
+        console.error(error);
+        alert("Update failed");
+      }
+    };
 
   const handleImageClick = (index: number | null = null) => {
-    setEditingImageIndex(index);
+    setEditingImageIndex(index);   // ✅ set index to replace
+    setImageURL('');               // reset preview
+    setFile(null);                 // reset old file
+
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
+  };
+
+  // Handle file changes for image upload
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    const selectedFile = event.target.files?.[0];
+
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImageURL(reader.result as string); // preview only
+    };
+    reader.readAsDataURL(selectedFile);
   };
 
   const handleDelete = async (furnitureId: string) => {
@@ -208,19 +211,7 @@ useEffect(() => {
     }
   };
 
-  // Group furniture by category and then by sale/rent status
-  // const groupedFurniture = furnitureList.reduce((acc, furniture) => {
-  //   if (!acc[furniture.category]) {
-  //     acc[furniture.category] = { forSale: [], forRent: [] };
-  //   }
-  //   if (furniture.is_for_sale) {
-  //     acc[furniture.category].forSale.push(furniture);
-  //   }
-  //   if (furniture.is_for_rent) {
-  //     acc[furniture.category].forRent.push(furniture);
-  //   }
-  //   return acc;
-  // }, {} as Record<string, { forSale: Furniture[], forRent: Furniture[] }>);
+
 
   // Handle tab switching
   const handleTabChange = (tab: 'buy' | 'rent'| 'all') => {
@@ -551,12 +542,16 @@ useEffect(() => {
                        <Slider {...sliderSettings}>
                          {selectedFurniture.images.map((img, index) => (
                            <div key={index} className="relative">
-                             <img
-                               src={img}
-                               alt={selectedFurniture.title}
-                               className="w-full h-64 object-cover rounded cursor-pointer"
-                               onClick={() => handleImageClick(index)}
-                             />
+                            <img
+                              src={
+                                editingImageIndex === index && imageURL
+                                  ? imageURL   // ✅ show preview if replacing
+                                  : img
+                              }
+                              alt={selectedFurniture.title}
+                              className="w-full h-64 object-cover rounded cursor-pointer"
+                              onClick={() => handleImageClick(index)}
+                            />
                              <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
                                <span className="text-white bg-teal-600 p-2 rounded-full">
                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -572,11 +567,11 @@ useEffect(() => {
                        selectedFurniture.image && (
                          <div className="relative">
                            <img
-                             src={selectedFurniture.image}
-                             alt={selectedFurniture.title}
-                             className="w-full h-64 object-cover rounded cursor-pointer"
-                             onClick={() => handleImageClick()}
-                           />
+                              src={imageURL || selectedFurniture.image}
+                              alt={selectedFurniture.title}
+                              className="w-full h-64 object-cover rounded cursor-pointer"
+                              onClick={() => handleImageClick(0)} // treat single image as index 0
+                            />
                            <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
                              <span className="text-white bg-teal-600 p-2 rounded-full">
                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
