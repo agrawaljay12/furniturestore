@@ -152,6 +152,8 @@ function bdroom(): React.ReactElement {
 
 // Handle image click to trigger file input
 const handleImageClick = (index?: number) => {
+
+  console.log("CLICKED IMAGE", index); // 👈 check this
   const finalIndex = index ?? 0;
 
   setEditingImageIndex(finalIndex);
@@ -537,18 +539,24 @@ return (
                     {selectedFurniture.images && selectedFurniture.images.length > 0 ? (
                       <Slider {...sliderSettings}>
                         {selectedFurniture.images.map((img, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={
-                                editingImageIndex === index && imageURL
-                                  ? imageURL   // ✅ show preview
-                                  : img
-                              }
-                              alt={selectedFurniture.title}
-                              className="w-full h-64 object-cover rounded cursor-pointer"
+                          <div
+                              className="relative cursor-pointer"
                               onClick={() => handleImageClick(index)}
-                            />
-                          </div>
+                              >
+                              <img
+                                src={
+                                  editingImageIndex === index && imageURL
+                                    ? imageURL
+                                    : img
+                                }
+                                className="w-full h-64 object-cover rounded"
+                              />
+
+                              {/* overlay */}
+                              <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 hover:opacity-100 flex items-center justify-center transition">
+                                <span className="text-white">Click to replace</span>
+                              </div>
+                            </div>
                         ))}
                       </Slider>
                     ) : (
@@ -567,7 +575,7 @@ return (
                             </p>
                           )}
 
-                          <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                          <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 hover:opacity-100 flex items-center justify-center transition pointer-events-none">
                             <span className="text-white bg-teal-600 p-2 rounded-full">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
