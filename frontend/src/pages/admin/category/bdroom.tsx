@@ -151,32 +151,41 @@ function bdroom(): React.ReactElement {
   };
 
 // Handle image click to trigger file input
-const handleImageClick = (index?: number) => {
+const handleImageClick = (index: number | null = null, e?: React.MouseEvent) => {
+  e?.stopPropagation();
 
-  console.log("CLICKED IMAGE", index); // 👈 check this
-  const finalIndex = index ?? 0;
+  console.log("IMAGE CLICKED:", index); // 🔍 DEBUG
 
-  setEditingImageIndex(finalIndex);
+  if (!selectedFurniture) return;
+
+  if (selectedFurniture.images && selectedFurniture.images.length > 0) {
+    setEditingImageIndex(index ?? 0);
+  } else {
+    setEditingImageIndex(0);
+  }
+
   setFile(null);
   setImageURL('');
 
-  fileInputRef.current?.click();
+  // 🔥 IMPORTANT: delay fixes slider blocking
+  setTimeout(() => {
+    fileInputRef.current?.click();
+  }, 0);
 };
 
 // Handle file changes for image upload
 const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-  const selectedFile = event.target.files?.[0];
-  if (!selectedFile) return;
+  const selectedFiles = Array.from(event.target.files || []);
 
-  setFile(selectedFile);
+  if (!selectedFiles.length) return;
+
+  setFile(selectedFiles[0]);
 
   const reader = new FileReader();
-  reader.onloadend = () => {
-    setImageURL(reader.result as string);
-  };
-  reader.readAsDataURL(selectedFile);
+  reader.onloadend = () => setImageURL(reader.result as string);
+  reader.readAsDataURL(selectedFiles[0]);
 
-  // IMPORTANT: reset input so same file can be selected again
+  // ✅ VERY IMPORTANT
   event.target.value = '';
 };
 
@@ -539,26 +548,30 @@ return (
                     {selectedFurniture.images && selectedFurniture.images.length > 0 ? (
                       <Slider {...sliderSettings}>
                         {selectedFurniture.images.map((img, index) => (
-                          <div
+                          <div key={index}>
+                            <div
                               className="relative cursor-pointer"
                               onClick={() => handleImageClick(index)}
-                              >
+                            >
                               <img
                                 src={
                                   editingImageIndex === index && imageURL
                                     ? imageURL
                                     : img
                                 }
+                                alt={selectedFurniture.title}
                                 className="w-full h-64 object-cover rounded"
+                                draggable={false} // ✅ VERY IMPORTANT (fix for slick)
                               />
 
-                              {/* overlay */}
-                              <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 hover:opacity-100 flex items-center justify-center transition">
-                                <span className="text-white">Click to replace</span>
+                              {/* Overlay */}
+                              <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 hover:opacity-100 flex items-center justify-center pointer-events-none transition">
+                                <span className="text-white text-sm">Click to replace</span>
                               </div>
                             </div>
+                          </div>
                         ))}
-                      </Slider>
+                    </Slider>
                     ) : (
                       selectedFurniture.image && (
                         <div className="relative">
@@ -586,12 +599,16 @@ return (
                         </div>
                       )
                     )}
+
                     <input
                       type="file"
                       ref={fileInputRef}
+                      accept="image/*"
+                      multiple
                       onChange={handleFileChange}
                       className="hidden"
                     />
+
                     {imageURL && (
                       <div className="mt-4 border-2 border-teal-500 p-1 rounded">
                         <img
