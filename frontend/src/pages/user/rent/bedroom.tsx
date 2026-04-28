@@ -121,7 +121,7 @@ const BedroomPage: React.FC = () => {
                order: sortOrder,
                search: searchQuery,
                listing_type: "rent",
-               title: "", // ✅ REMOVE HARDCODE
+               title: "bedroom", // ✅ REMOVE HARDCODE
              }),
            }
          );
