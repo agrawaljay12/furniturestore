@@ -390,7 +390,7 @@ const LivingPage: React.FC = () => {
                 
                 <div className="mt-4 space-y-3">
                   <div className="flex justify-between items-center">
-                    <div className="text-xl font-bold text-gray-900">${product.price}</div>
+                    <div className="text-xl font-bold text-gray-900">${product.rent_price}</div>
                     {product.condition && (
                       <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                         {product.condition}
@@ -475,7 +475,7 @@ const LivingPage: React.FC = () => {
               
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-2">
-                  <div className="text-2xl font-bold text-gray-900">${(parseFloat(previewProduct.price) * quantity).toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-gray-900">${(parseFloat(previewProduct.rent_price) * quantity).toFixed(2)}</div>
                   <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">
                     {previewProduct.availability_status || 'In Stock'}
                   </div>
