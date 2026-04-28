@@ -108,7 +108,7 @@ const guestliving: React.FC = () => {
               order: sortOrder,
               search: searchQuery,
               listing_type: "buy",
-              title: "dining",
+              title: "living room",
             }),
           }
         );
