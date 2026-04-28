@@ -159,16 +159,7 @@ const BuyPage: React.FC = () => {
 
     return () => clearTimeout(delay);
   }, [searchQuery]);
-
-  // useEffect(() => {
-  //   // Paginate the fetched products
-  //   const startIndex = (page - 1) * pageSize;
-  //   const endIndex = startIndex + pageSize;
-  //   setDisplayedProducts(products.slice(startIndex, endIndex));
-
-  //   // Set total pages
-  //   setTotalPages(Math.ceil(products.length / pageSize));
-  // }, [products, page, pageSize]);
+  
 
   useEffect(() => {
     const userId = localStorage.getItem("token");
