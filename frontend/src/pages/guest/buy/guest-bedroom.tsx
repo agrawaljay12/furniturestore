@@ -106,8 +106,9 @@ const GuestBedroom: React.FC = () => {
               limit: pageSize,
               sort_by: sortBy,
               order: sortOrder,
-              search: searchQuery || "Bedroom", // ✅ FIXED FILTER
+              search: searchQuery,
               listing_type: "buy",
+              title: "bedroom",
             }),
           }
         );
