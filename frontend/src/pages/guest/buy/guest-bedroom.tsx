@@ -9,12 +9,12 @@ import ChatWidget from "../../../components/ChatAi/ChatWidget";
 interface Product {
   _id: string;
   title: string;
-  price: string;
+  price: number;
   image?: string;
   description: string;
   category: string;
   is_for_rent: boolean;
-  rent_price: string;
+  rent_price: number;
   is_for_sale: boolean;
   condition: string;
   availability_status: string;
@@ -30,7 +30,8 @@ interface Product {
 
 const GuestBedroom: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
+
+  // state for pagination and sorting
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
@@ -38,10 +39,13 @@ const GuestBedroom: React.FC = () => {
   const [sortBy, setSortBy] = useState("price");
   const [sortOrder, setSortOrder] = useState("asc");
   const [showSortOptions, setShowSortOptions] = useState(false);
+  
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const navigate = useNavigate();
   const sortRef = useRef<HTMLDivElement>(null);
+
+  const [loading, setLoading] = useState(false);
 
   // Click outside handler for sort dropdown
   useEffect(() => {
@@ -60,144 +64,128 @@ const GuestBedroom: React.FC = () => {
   // Function to handle sorting
   const handleSort = (newSortBy: string) => {
     if (sortBy === newSortBy) {
-      // Toggle sort order if clicking the same field
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
-      // Set new sort field and default to ascending
       setSortBy(newSortBy);
       setSortOrder("asc");
     }
-    
+
+    setPage(1); 
     setShowSortOptions(false);
   };
-  
+
   // Function to get sort display text
   const getSortDisplayText = () => {
-    const field = sortBy.charAt(0).toUpperCase() + sortBy.slice(1);
+    const map: Record<string, string> = {
+      price: "Price",
+      title: "Name",
+      category: "Category",
+      created_at: "Date Added",
+    };
+
+    const field = map[sortBy] || sortBy;
     const order = sortOrder === "asc" ? "Low to High" : "High to Low";
+
     return `${field}: ${order}`;
   };
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const headersList = { "Content-Type": "application/json" };
-      const bodyContent = JSON.stringify({
-        page,
-        page_size: 100,
-        sort_by: sortBy,
-        sort_order: sortOrder,
-        search: searchQuery,
-        title: "Bedroom", // Filter by bedroom category
-        is_for_sale: true // Fetch only furniture that is for sale
-      });
+      setLoading(true);
 
       try {
         const response = await fetch(
           "https://furnspace.onrender.com/api/v1/furniture/list_all",
           {
             method: "POST",
-            body: bodyContent,
-            headers: headersList,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              page,
+              limit: pageSize,
+              sort_by: sortBy,
+              order: sortOrder,
+              search: searchQuery || "Bedroom", // ✅ FIXED FILTER
+              listing_type: "buy",
+            }),
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
         const data = await response.json();
 
-        if (data && data.data) {
-          // Make sure to only include items that are for sale
-          const filteredProducts = data.data.filter((product: Product) => product.is_for_sale === true);
-          setProducts(filteredProducts);
+        console.log("API RESPONSE:", data);
+
+        if (data?.data) {
+          setProducts(data.data);
+          setTotalPages(data.pagination?.total_pages || 1);
+        } else {
+          setProducts([]);
         }
       } catch (error) {
         console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchProducts();
-  }, [searchQuery, sortBy, sortOrder, page]);
+  fetchProducts();
+}, [page, pageSize, sortBy, sortOrder, searchQuery]);
 
-  useEffect(() => {
-    // Paginate the fetched products
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setDisplayedProducts(products.slice(startIndex, endIndex));
+useEffect(() => {
+  const userId = localStorage.getItem("token");
+  if (userId) {
+    const storedWishlist = JSON.parse(localStorage.getItem(`wishlist_${userId}`) || "[]");
+    setWishlist(storedWishlist);
+  }
+}, []);
 
-    // Set total pages
-    setTotalPages(Math.ceil(products.length / pageSize));
-  }, [products, page, pageSize]);
+const handleSearch = (query: string) => {
+  setPage(1); // reset page
+  setSearchQuery(query);
+};
 
-  useEffect(() => {
-    const userId = localStorage.getItem("token");
-    if (userId) {
-      const storedWishlist = JSON.parse(localStorage.getItem(`wishlist_${userId}`) || "[]");
-      setWishlist(storedWishlist);
-    }
-  }, []);
+useEffect(() => {
+    const delay = setTimeout(() => {
+      setPage(1); // reset page
+    }, 500);
 
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    setPage(1);
-    
-    // Implement full API call with filtering
-    const headersList = { "Content-Type": "application/json" };
-    const bodyContent = JSON.stringify({
-      page: 1,
-      page_size: pageSize,
-      sort_by: sortBy,
-      sort_order: sortOrder,
-      search: query.trim(),
-      title: "Bedroom",
-      is_for_sale: true
-    });
-
-    try {
-      const response = await fetch(
-        "http://127.0.0.1:10007/api/v1/furniture/list_all",
-        {
-          method: "POST",
-          body: bodyContent,
-          headers: headersList,
-        }
-      );
-
-      const data = await response.json();
-
-      if (data && data.data) {
-        // Make sure to only include items that are for sale
-        const filteredProducts = data.data.filter((product: Product) => product.is_for_sale === true);
-        setProducts(filteredProducts);
-        setDisplayedProducts(filteredProducts.slice(0, pageSize));
-        setTotalPages(Math.ceil(filteredProducts.length / pageSize));
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    }
-  };
+    return () => clearTimeout(delay);
+  }, [searchQuery]);
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
   };
 
-  const closeLoginPopup = () => {
-    setShowLoginPopup(false);
-    navigate('/guest-bedroom');
-  };
 
-  const handleAddToWishlist = () => {
+const closeLoginPopup = () => {
+  setShowLoginPopup(false);
+  navigate('/guest-bedroom');
+};
+
+const handleAddToWishlist = (product: Product) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
     setShowLoginPopup(true);
-  };
+    return;
+  }
 
-  const isProductInWishlist = (productId: string) => {
-    return wishlist.some(product => product._id === productId);
-  };
+  setWishlist((prev) => {
+    if (prev.some(p => p._id === product._id)) return prev;
+    return [...prev, product];
+  });
+};
 
-  const handleProductClick = (product: Product) => {
-    navigate(`/guest-view-product/${product._id}`, { state: { product } });
-  };
+
+const isProductInWishlist = (productId: string) => {
+  return wishlist.some(product => product._id === productId);
+};
+
+const handleProductClick = (product: Product) => {
+  navigate(`/guest-view-product/${product._id}`, { state: { product } });
+};
 
   return (
     <>
@@ -275,13 +263,19 @@ const GuestBedroom: React.FC = () => {
                       <div className="mt-1 flex space-x-4">
                         <button
                           className={`px-3 py-1.5 rounded text-sm ${sortOrder === "asc" ? "bg-yellow-100 text-yellow-800 font-medium" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                          onClick={() => setSortOrder("asc")}
+                          onClick={() => {
+                            setSortOrder("asc");
+                            setPage(1);
+                          }}
                         >
                           Ascending
                         </button>
                         <button
                           className={`px-3 py-1.5 rounded text-sm ${sortOrder === "desc" ? "bg-yellow-100 text-yellow-800 font-medium" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                          onClick={() => setSortOrder("desc")}
+                          onClick={() => {
+                            setSortOrder("desc");
+                            setPage(1);
+                          }}
                         >
                           Descending
                         </button>
@@ -295,7 +289,16 @@ const GuestBedroom: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mt-8 px-4">
-          {displayedProducts.map((product, index) => (
+
+          {loading && (
+            <p className="text-center mt-6 text-gray-500">Loading bedroom furniture...</p>
+          )}
+
+          {!loading && products.length === 0 && (
+            <p className="text-center mt-6 text-gray-500">No bedroom furniture found</p>
+          )}
+
+          {products.map((product, index) => (
             <div
               key={product._id}
               className="bg-white rounded-xl shadow-md overflow-hidden w-full h-full flex flex-col cursor-pointer card-hover"
@@ -324,7 +327,7 @@ const GuestBedroom: React.FC = () => {
                   aria-label="Wishlist"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleAddToWishlist();
+                    handleAddToWishlist(product);
                   }}
                 >
                   <FiHeart />
