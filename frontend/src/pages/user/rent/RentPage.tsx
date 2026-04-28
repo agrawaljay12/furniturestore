@@ -98,7 +98,7 @@ const RentPage: React.FC = () => {
         newOrder === "asc" ? "ascending" : "descending"
       } order`
     );
-};
+  };
 
   // Function to get sort display text
   const getSortDisplayText = () => {
