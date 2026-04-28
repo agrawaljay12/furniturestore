@@ -72,11 +72,12 @@ const BedroomPage: React.FC = () => {
   
         const bodyContent = JSON.stringify({
           page: page,
-          limit: pageSize, // 🔥 IMPORTANT
+          limit: pageSize,
           sort_by: sortBy,
           sort_order: sortOrder,
           search: searchQuery,
-          listing_type: "buy", // 🔥 IMPORTANT
+          listing_type: "buy",
+          title: "bedroom",
         });
   
         try {
