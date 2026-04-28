@@ -122,7 +122,7 @@ const BuyPage: React.FC = () => {
         page: page,
         limit: pageSize, // 🔥 IMPORTANT
         sort_by: sortBy,
-        sort_order: sortOrder,
+        order: sortOrder,
         search: searchQuery,
         listing_type: "buy", // 🔥 IMPORTANT
       });

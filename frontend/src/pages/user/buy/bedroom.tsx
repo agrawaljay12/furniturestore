@@ -53,6 +53,7 @@ const BedroomPage: React.FC = () => {
   const logUserActivity = useActivityLogger(); // Initialize the logger
   const sortRef = useRef<HTMLDivElement>(null); // Add ref for sort dropdown
 
+  
   // Close sort dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -74,7 +75,7 @@ const BedroomPage: React.FC = () => {
           page: page,
           limit: pageSize,
           sort_by: sortBy,
-          sort_order: sortOrder,
+          order: sortOrder,
           search: searchQuery,
           listing_type: "buy",
           title: "bedroom",
