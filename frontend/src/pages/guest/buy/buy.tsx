@@ -101,17 +101,6 @@ const Buy: React.FC = () => {
   
   useEffect(() => {
     const fetchProducts = async () => {
-      const headersList = { "Content-Type": "application/json" };
-
-      const bodyContent = JSON.stringify({
-        page: page,
-        limit: pageSize, 
-        sort_by: sortBy,
-        order: sortOrder,
-        search: searchQuery,
-        listing_type: "buy", // 
-      });
-
       setLoading(true);
 
       try {
@@ -119,34 +108,46 @@ const Buy: React.FC = () => {
           "https://furnspace.onrender.com/api/v1/furniture/list_all",
           {
             method: "POST",
-            body: bodyContent,
-            headers: headersList,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              page: page,
+              limit: pageSize,
+              sort_by: sortBy,
+              order: sortOrder, 
+              search: searchQuery,
+              listing_type: "buy",
+            }),
           }
         );
 
         const data = await response.json();
 
-        if (data && data.data) {
-          setProducts(data.data); // ✅ DIRECT
-          setTotalPages(data?.pagination?.total_pages || 1);
+        console.log("API RESPONSE:", data); // 🔍 DEBUG
+
+        if (data?.data) {
+          setProducts(data.data);
+          setTotalPages(data.pagination?.total_pages || 1);
+        } else {
+          setProducts([]);
         }
       } catch (error) {
         console.error("Error fetching products:", error);
-      }
-      finally {
+      } finally {
         setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [page, pageSize, searchQuery, sortBy, sortOrder]);
+  }, [page, pageSize, sortBy, sortOrder, searchQuery]);
 
   useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      setPage(1);
+    const delay = setTimeout(() => {
+      setPage(1); // reset page
     }, 500);
 
-    return () => clearTimeout(delayDebounce);
+    return () => clearTimeout(delay);
   }, [searchQuery]);
 
   const handlePageChange = (newPage: number) => {
