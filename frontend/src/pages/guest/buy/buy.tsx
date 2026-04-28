@@ -18,12 +18,12 @@ import deskimage from "../../../assets/desk.png";
 interface Product {
   _id: string;
   title: string;
-  price: string;
+  price: number;
   image?: string;
   description: string;
   category: string;
   is_for_rent: boolean;
-  rent_price: string;
+  rent_price: number;
   is_for_sale: boolean;
   condition: string;
   availability_status: string;
@@ -51,10 +51,11 @@ const Buy: React.FC = () => {
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
-  const [wishlist,] = useState<Product[]>([]);
+  const [wishlist, setWishlist] = useState<Product[]>([]);
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const sortRef = React.useRef<HTMLDivElement>(null); // Reference for click outside handling
+  const [, setLoading] = useState(false);
   
   // Handle clicking outside of the sort dropdown
   useEffect(() => {
@@ -98,18 +99,20 @@ const Buy: React.FC = () => {
     return `${field}: ${order}`;
   };
   
-useEffect(() => {
+  useEffect(() => {
     const fetchProducts = async () => {
       const headersList = { "Content-Type": "application/json" };
 
       const bodyContent = JSON.stringify({
         page: page,
-        limit: pageSize, // 🔥 IMPORTANT
+        limit: pageSize, 
         sort_by: sortBy,
         order: sortOrder,
         search: searchQuery,
-        listing_type: "buy", // 🔥 IMPORTANT
+        listing_type: "buy", // 
       });
+
+      setLoading(true);
 
       try {
         const response = await fetch(
@@ -125,25 +128,26 @@ useEffect(() => {
 
         if (data && data.data) {
           setProducts(data.data); // ✅ DIRECT
-          setTotalPages(data.pagination.total_pages); // ✅ FROM BACKEND
+          setTotalPages(data?.pagination?.total_pages || 1);
         }
       } catch (error) {
         console.error("Error fetching products:", error);
       }
+      finally {
+        setLoading(false);
+      }
     };
 
     fetchProducts();
-  }, [page, searchQuery, sortBy, sortOrder]);
-
+  }, [page, pageSize, searchQuery, sortBy, sortOrder]);
 
   useEffect(() => {
-      const delay = setTimeout(() => {
-        setPage(1);
-      }, 500);
-  
-      return () => clearTimeout(delay);
-  }, [searchQuery]);
+    const delayDebounce = setTimeout(() => {
+      setPage(1);
+    }, 500);
 
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -152,8 +156,12 @@ useEffect(() => {
   };
 
   const handleAddToCart = (product: Product, quantity: number) => {
-    setShowLoginPopup(true);
-    return;
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setShowLoginPopup(true);
+      return;
+    }
 
     if (quantity <= 0) {
       alert("Quantity must be greater than 0.");
@@ -183,10 +191,18 @@ useEffect(() => {
     navigate(`/guest-view-product/${product._id}`, { state: { product } });
   };
 
-  const handleAddToWishlist = () => {
-    setShowLoginPopup(true);
-    return;
-    };
+  const handleAddToWishlist = (product: Product) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setShowLoginPopup(true);
+      return;
+    }
+
+    setWishlist((prev) => {
+      if (prev.some(p => p._id === product._id)) return prev;
+      return [...prev, product];
+    });
+  };
 
   const isProductInWishlist = (productId: string) => {
     return wishlist.some(product => product._id === productId);
@@ -231,7 +247,7 @@ useEffect(() => {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search for furniture..."
             className="p-2 border border-gray-300 rounded w-1/2"
               />
@@ -600,7 +616,7 @@ useEffect(() => {
                   aria-label="Wishlist"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleAddToWishlist();
+                    handleAddToWishlist(product);
                   }}
                 >
                   <FiHeart />
