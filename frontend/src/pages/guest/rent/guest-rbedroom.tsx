@@ -5,7 +5,6 @@ import Header from "../../../components/guest/Header";
 import Footer from "../../../components/guest/Footer";
 import ChatWidget from "../../../components/ChatAi/ChatWidget";
 
-
 interface Product {
   _id: string;
   title: string;
@@ -29,8 +28,10 @@ interface Product {
 
 const guestbedroom: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]); // List all products
-  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]); // Paginated products
-  const [searchQuery] = useState("");
+  
+  // State for pagination and filtering
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10); // 10 cards per page
   const [totalPages, setTotalPages] = useState(1);
@@ -43,56 +44,61 @@ const guestbedroom: React.FC = () => {
   const navigate = useNavigate();
   const sortRef = useRef<HTMLDivElement>(null); // Reference for click outside handling
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const headersList = { "Content-Type": "application/json" };
-      const bodyContent = JSON.stringify({
-        page,
-        page_size: 100,
-        sort_by: sortBy,
-        sort_order: sortOrder,
-        search: searchQuery,
-        title: "Bedroom",
-        is_for_rent: true
-      });
+  const [loading, setLoading] = useState(false);
 
-      try {
-        const response = await fetch(
-          "https://furnspace.onrender.com/api/v1/furniture/list_all",
-          {
-            method: "POST",
-            body: bodyContent,
-            headers: headersList,
+  useEffect(() => {
+      const fetchProducts = async () => {
+        setLoading(true);
+  
+        try {
+          const response = await fetch(
+            "https://furnspace.onrender.com/api/v1/furniture/list_all",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                page: page,
+                limit: pageSize,
+                sort_by: sortBy,
+                order: sortOrder, 
+                search: debouncedSearch,
+                listing_type: "rent",
+                title: "Bedroom"
+              }),
+            }
+          );
+  
+          const data = await response.json();
+  
+          console.log("API RESPONSE:", data); // 🔍 DEBUG
+  
+          if (data?.data) {
+            setProducts(data.data);
+            setTotalPages(data.pagination?.total_pages || 1);
+          } else {
+            setProducts([]);
           }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+        } catch (error) {
+          console.error("Error fetching products:", error);
+        } finally {
+          setLoading(false);
         }
+      };
+  
+      fetchProducts();
+  },[page, sortBy, sortOrder, debouncedSearch]);
 
-        const data = await response.json();
+  // Reset to first page when search query changes
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setDebouncedSearch(searchQuery);
+        setPage(1);
+      }, 500);
 
-        if (data && data.data) {
-          const filteredProducts = data.data.filter((product: Product) => product.is_for_rent);
-          setProducts(filteredProducts); // Set only products available for rent
-        }
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      }
-    };
-
-    fetchProducts();
-  }, [searchQuery, sortBy, sortOrder, page]);
-
-  useEffect(() => {
-    // Paginate the fetched products
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setDisplayedProducts(products.slice(startIndex, endIndex));
-
-    // Set total pages
-    setTotalPages(Math.ceil(products.length / pageSize));
-  }, [products, page, pageSize]);
+      return () => clearTimeout(timer);
+    }, [searchQuery]);
 
   useEffect(() => {
     const userId = localStorage.getItem("token");
@@ -117,23 +123,30 @@ const guestbedroom: React.FC = () => {
   }, [sortRef]);
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
   };
 
-  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    e.stopPropagation();
-    setShowLoginPopup(true);
+  const handleAddToCart = (product: Product, quantity: number) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setShowLoginPopup(true);
+      return;
+    }
+
+    if (quantity <= 0) {
+      alert("Quantity must be greater than 0.");
+      return;
+    }
+
+    // addToCart(product, quantity);
+    alert("Added to cart!");
+    // closePreview();
   };
 
-  // const closePreview = () => {
-  //   setPreviewProduct(null);
-  // };
-
-  // const handleHeartIconClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-  //   e.stopPropagation();
-  //   setShowLoginPopup(true);
-  // };
-
+ 
   const handleProductClick = (product: Product) => {
     navigate(`/guest-view-product/${product._id}`, { state: { product } });
   };
@@ -171,31 +184,44 @@ const guestbedroom: React.FC = () => {
   // Function to handle sorting
   const handleSort = (newSortBy: string) => {
     if (sortBy === newSortBy) {
-      // Toggle sort order if clicking the same field
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
-      // Set new sort field and default to ascending
       setSortBy(newSortBy);
       setSortOrder("asc");
     }
 
+    setPage(1); 
     setShowSortOptions(false);
   };
-
+  
   // Function to get sort display text
   const getSortDisplayText = () => {
-    const field = sortBy.charAt(0).toUpperCase() + sortBy.slice(1);
+    const map: Record<string, string> = {
+      rent_price: "Price",
+      title: "Name",
+      category: "Category",
+      created_at: "Date Added",
+    };
+
+    const field = map[sortBy] || sortBy;
     const order = sortOrder === "asc" ? "Low to High" : "High to Low";
+
     return `${field}: ${order}`;
   };
 
   return (
     <React.Fragment>
       <div className="fixed top-0 left-0 right-0 z-50">
-        <Header logotext="Furniture Store" onSearch={(query: string) => {
-          // Implement search functionality here
-          console.log("Search query:", query);
-        }} />
+       <Header logotext="Furniture Store" onSearch={setSearchQuery} />
+        <div className="flex justify-center mt-4">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search for furniture..."
+            className="p-2 border border-gray-300 rounded w-1/2"
+              />
+        </div>
       </div>
 
       <div className="min-h-screen bg-gray-50 px-8 pt-24 pb-16">
@@ -291,7 +317,16 @@ const guestbedroom: React.FC = () => {
         `}</style>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-8">
-          {displayedProducts.map((product, index) => (
+
+          {loading && (
+            <div className="text-center py-10">Loading...</div>
+          )}
+
+          {!loading && products.length === 0 && (
+            <div className="text-center py-10">No data found</div>
+          )}
+
+          {products.map((product, index) => (
             <div
               key={product._id}
               className="bg-white rounded-xl shadow-md overflow-hidden w-full h-full flex flex-col cursor-pointer card-hover"
@@ -348,7 +383,7 @@ const guestbedroom: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleAddToCart(e);
+                      handleAddToCart(product, product.quantity || 1);
                     }}
                     className="w-full py-2.5 px-4 bg-yellow-400 text-gray-900 rounded-lg font-medium hover:bg-yellow-500 transition-all transform hover:scale-105 focus:ring-2 focus:ring-yellow-300 flex items-center justify-center space-x-2"
                   >
@@ -466,3 +501,4 @@ const guestbedroom: React.FC = () => {
 };
 
 export default guestbedroom;
+
