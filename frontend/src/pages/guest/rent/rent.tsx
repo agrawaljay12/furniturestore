@@ -634,7 +634,7 @@ const Rent: React.FC = () => {
                 
                 <div className="mt-4 space-y-3">
                   <div className="flex justify-between items-center">
-                    <div className="text-xl font-bold text-gray-900">${product.rent_price}</div>
+                    <div className="text-xl font-bold text-gray-900">${product.rent_price}/day</div>
                     {product.condition && (
                       <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                         {product.condition}
@@ -767,7 +767,7 @@ const Rent: React.FC = () => {
           alt={previewProduct.title}
           className="w-full h-64 object-cover mb-4"
               />
-              <div className="mt-4 text-lg font-bold">${previewProduct.price}</div>
+              <div className="mt-4 text-lg font-bold">${previewProduct.rent_price}/day</div>
               <div className="mt-4 flex items-center">
           <label className="mr-2 text-gray-700">Quantity:</label>
           <input
