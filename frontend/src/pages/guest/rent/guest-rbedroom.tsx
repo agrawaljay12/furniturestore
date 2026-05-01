@@ -128,7 +128,7 @@ const guestbedroom: React.FC = () => {
     }
   };
 
-  const handleAddToCart = (product: Product, quantity: number) => {
+  const handleAddToCart = (_product: Product, quantity: number) => {
     const token = localStorage.getItem("token");
 
     if (!token) {
