@@ -40,6 +40,8 @@ const guestbedroom: React.FC = () => {
   const [showSortOptions, setShowSortOptions] = useState(false);
   
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const navigate = useNavigate();
   const sortRef = useRef<HTMLDivElement>(null); // Reference for click outside handling
@@ -208,6 +210,17 @@ const guestbedroom: React.FC = () => {
 
     return `${field}: ${order}`;
   };
+
+
+  const closePreview = () => {
+    setPreviewProduct(null);
+  };
+
+  // const handleHeartIconClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+  //   e.stopPropagation();
+  //   setShowLoginPopup(true);
+  // };  
+    
 
   return (
     <React.Fragment>
@@ -435,7 +448,42 @@ const guestbedroom: React.FC = () => {
           }
         `}</style>
 
-        {/* ...existing product preview modal... */}
+        {/* product preview modal... */}
+
+        {previewProduct && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold text-gray-800">{previewProduct.title}</h3>
+          <button onClick={closePreview} className="text-gray-500 hover:text-gray-700">X</button>
+              </div>
+              <img
+          src={previewProduct.images && previewProduct.images.length > 0 ? previewProduct.images[0] : previewProduct.image}
+          alt={previewProduct.title}
+          className="w-full h-64 object-cover mb-4"
+              />
+              <div className="mt-4 text-lg font-bold">${previewProduct.rent_price}/day</div>
+              <div className="mt-4 flex items-center">
+          <label className="mr-2 text-gray-700">Quantity:</label>
+          <input
+            type="number"
+            value={quantity}
+            min={1}
+            onChange={(e) => setQuantity(parseInt(e.target.value))}
+            className="w-16 p-2 border border-gray-300 rounded"
+          />
+              </div>
+              <div className="mt-6 flex justify-center">
+          <button
+            onClick={() => handleAddToCart(previewProduct, quantity)}
+            className="py-2 px-4 bg-teal-600 text-white rounded-full hover:bg-teal-500 transition-all transform hover:scale-105"
+          >
+            Add to Cart
+          </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showLoginPopup && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm transition-all duration-300">
@@ -501,4 +549,5 @@ const guestbedroom: React.FC = () => {
 };
 
 export default guestbedroom;
+
 
