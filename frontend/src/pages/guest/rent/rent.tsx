@@ -259,11 +259,11 @@ const Rent: React.FC = () => {
        <div className="p-10 bg-transparent mt-32">
           <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8 justify-items-center ">
             {[
-              { label: "Living Room", icon: couchImage, badge: "", badgeColor: "bg-yellow-400", link: "/guest-living" },
-              { label: "Bedroom", icon: bedimage, badge: "", badgeColor: "bg-yellow-400", link: "/guest-bedroom" },
-              { label: "Storage", icon: storeimage, badge: "", badgeColor: "", link: "/guest-storage" },
-              { label: "Dining", icon: diningimage, badge: "", badgeColor: "", link: "/guest-dining" },
-              { label: "Tables", icon: deskimage, badge: "", badgeColor: "", link: "/guest-table" },
+              { label: "Living Room", icon: couchImage, badge: "", badgeColor: "bg-yellow-400", link: "/guest-rliving" },
+              { label: "Bedroom", icon: bedimage, badge: "", badgeColor: "bg-yellow-400", link: "/guest-rbedroom" },
+              { label: "Storage", icon: storeimage, badge: "", badgeColor: "", link: "/guest-rstorage" },
+              { label: "Dining", icon: diningimage, badge: "", badgeColor: "", link: "/guest-rdining" },
+              { label: "Tables", icon: deskimage, badge: "", badgeColor: "", link: "/guest-rtable" },
             ].map((item) => (
               <div
               key={item.label}
@@ -286,9 +286,9 @@ const Rent: React.FC = () => {
           {/* Centered Last Two Items */}
           <div className="flex justify-center gap-28 mt-20">
             {[
-              { label: "Chairs", icon: chairimage, badge: "", badgeColor: "", link: "/guest-chairs" },
-              { label: "Best Deals", icon: dealimage, badge: "", badgeColor: "", link: "/guest-deals" },
-              { label: "Mattress", icon: mattress, badge: "", badgeColor: "", link: "/guest-mattress" },
+              { label: "Chairs", icon: chairimage, badge: "", badgeColor: "", link: "/guest-rchairs" },
+              { label: "Best Deals", icon: dealimage, badge: "", badgeColor: "", link: "/guest-rdeals" },
+              { label: "Mattress", icon: mattress, badge: "", badgeColor: "", link: "/guest-rmattress" },
             ].map((item) => (
               <div
               key={item.label}
