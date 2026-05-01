@@ -1,20 +1,29 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import Header from "../../../components/guest/Header";
-import { FiHeart } from "react-icons/fi";
 import Footer from "../../../components/guest/Footer";
+import { useNavigate } from "react-router-dom";
+import { FiHeart } from "react-icons/fi";
 import ChatWidget from "../../../components/ChatAi/ChatWidget";
 
+// icons
+import couchImage from "../../../assets/couch.png"; // Import the image
+import storeimage from "../../../assets/store.png";
+import diningimage from "../../../assets/dining.png";
+import chairimage from "../../../assets/chair.png";
+import bedimage from "../../../assets/bed.png";
+import mattress from "../../../assets/mattress.png";
+import dealimage from "../../../assets/deal.png";
+import deskimage from "../../../assets/desk.png";
 
 interface Product {
   _id: string;
   title: string;
-  price: string;
+  price: number;
   image?: string;
   description: string;
   category: string;
   is_for_rent: boolean;
-  rent_price: string;
+  rent_price: number;
   is_for_sale: boolean;
   condition: string;
   availability_status: string;
@@ -23,27 +32,31 @@ interface Product {
   created_by: string;
   created_at: string;
   images: string[];
+  status?: string; // Added status property
   quantity?: number;
   totalPrice?: string; // To hold the total price for each item
 }
 
-const GuestTable: React.FC = () => {
+const GuestrTable: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]); // List all products
-  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]); // Paginated products
-  const [searchQuery] = useState("");
+  
+  const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10); // 10 cards per page
+  const [pageSize] = useState(10); // 12 cards per page
   const [totalPages, setTotalPages] = useState(1);
-  const [sortBy, setSortBy] = useState("price");
+  const [sortBy, setSortBy] = useState("rent_price");
   const [sortOrder, setSortOrder] = useState("asc");
-  const [showSortOptions, setShowSortOptions] = useState(false);
+  const [showSortOptions, setShowSortOptions] = useState(false); // Added for dropdown toggle
+
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const navigate = useNavigate();
-  const sortRef = useRef<HTMLDivElement>(null); // Reference for click outside handling
-
+  const { addToCart } = useCart();
+  const sortRef = React.useRef<HTMLDivElement>(null); // Reference for click outside handling
+  const [, setLoading] = useState(false);
+  
   // Handle clicking outside of the sort dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -51,156 +64,421 @@ const GuestTable: React.FC = () => {
         setShowSortOptions(false);
       }
     }
-
+    
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [sortRef]);
-
+  
   // Function to handle sorting
   const handleSort = (newSortBy: string) => {
     if (sortBy === newSortBy) {
-      // Toggle sort order if clicking the same field
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
-      // Set new sort field and default to ascending
       setSortBy(newSortBy);
       setSortOrder("asc");
     }
 
+    setPage(1); 
     setShowSortOptions(false);
   };
-
+  
   // Function to get sort display text
   const getSortDisplayText = () => {
-    const field = sortBy.charAt(0).toUpperCase() + sortBy.slice(1);
+    const map: Record<string, string> = {
+      rent_price: "Price",
+      title: "Name",
+      category: "Category",
+      created_at: "Date Added",
+    };
+
+    const field = map[sortBy] || sortBy;
     const order = sortOrder === "asc" ? "Low to High" : "High to Low";
+
     return `${field}: ${order}`;
   };
-
+  
   useEffect(() => {
     const fetchProducts = async () => {
-      const headersList = { "Content-Type": "application/json" };
-      const bodyContent = JSON.stringify({
-        page,
-        page_size: 100,
-        sort_by: sortBy,
-        sort_order: sortOrder,
-        search: searchQuery,
-        title: "Tables", // Use category field correctly
-        is_for_rent: true
-      });
+      setLoading(true);
 
       try {
         const response = await fetch(
           "https://furnspace.onrender.com/api/v1/furniture/list_all",
           {
             method: "POST",
-            body: bodyContent,
-            headers: headersList,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              page: page,
+              limit: pageSize,
+              sort_by: sortBy,
+              order: sortOrder, 
+              search: searchQuery,
+              listing_type: "rent",
+              title: "tables",
+            }),
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
         const data = await response.json();
 
-        if (data && data.data) {
-          const filteredProducts = data.data.filter((product: Product) => product.is_for_rent);
-          setProducts(filteredProducts); // Set only products available for rent
+        console.log("API RESPONSE:", data); // 🔍 DEBUG
+
+        if (data?.data) {
+          setProducts(data.data);
+          setTotalPages(data.pagination?.total_pages || 1);
+        } else {
+          setProducts([]);
         }
       } catch (error) {
         console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [searchQuery, sortBy, sortOrder, page]);
+  }, [page, pageSize, sortBy, sortOrder, searchQuery]);
 
   useEffect(() => {
-    // Paginate the fetched products
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setDisplayedProducts(products.slice(startIndex, endIndex));
+    const delay = setTimeout(() => {
+      setPage(1); // reset page
+    }, 500);
 
-    // Set total pages
-    setTotalPages(Math.ceil(products.length / pageSize));
-  }, [products, page, pageSize]);
-
-  useEffect(() => {
-    const userId = localStorage.getItem("token");
-    if (userId) {
-      const storedWishlist = JSON.parse(localStorage.getItem(`wishlist_${userId}`) || "[]");
-      setWishlist(storedWishlist);
-    }
-  }, []);
+    return () => clearTimeout(delay);
+  }, [searchQuery]);
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
   };
 
-  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    e.stopPropagation();
-    const userId = localStorage.getItem("token");
-    if (!userId) {
+  const handleAddToCart = (product: Product, quantity: number) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
       setShowLoginPopup(true);
       return;
     }
-    // Add your logic to add the product to the cart here
+
+    if (quantity <= 0) {
+      alert("Quantity must be greater than 0.");
+      return;
+    }
+
+    addToCart(product, quantity);
+    alert("Added to cart!");
+    closePreview();
+  };
+
+  const showProductPreview = (product: Product) => {
+    setPreviewProduct(product);
+    setQuantity(1);
   };
 
   const closePreview = () => {
     setPreviewProduct(null);
   };
 
-  const handleAddToWishlist = (product: Product) => {
-    const userId = localStorage.getItem("token");
-    if (!userId) {
-      setShowLoginPopup(true);
-      return;
-    }
-
-    const isInWishlist = wishlist.some(item => item._id === product._id);
-    let updatedWishlist;
-
-    if (isInWishlist) {
-      updatedWishlist = wishlist.filter(item => item._id !== product._id);
-      alert("Removed from wishlist!");
-    } else {
-      updatedWishlist = [...wishlist, product];
-      alert("Added to wishlist!");
-    }
-
-    setWishlist(updatedWishlist);
-    localStorage.setItem(`wishlist_${userId}`, JSON.stringify(updatedWishlist));
-  };
-
-  const isProductInWishlist = (productId: string) => {
-    return wishlist.some(product => product._id === productId);
+  const closeLoginPopup = () => {
+    setShowLoginPopup(false);
+    navigate('/guest-rent');
   };
 
   const handleProductClick = (product: Product) => {
     navigate(`/guest-view-product/${product._id}`, { state: { product } });
   };
 
-  const closeLoginPopup = () => {
-    setShowLoginPopup(false);
+  const handleAddToWishlist = (product: Product) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setShowLoginPopup(true);
+      return;
+    }
+
+    setWishlist((prev) => {
+      if (prev.some(p => p._id === product._id)) return prev;
+      return [...prev, product];
+    });
+  };
+
+  const isProductInWishlist = (productId: string) => {
+    return wishlist.some(product => product._id === productId);
+  };
+
+  const handleSearch = (query: string) => {
+    setPage(1); // reset page
+    setSearchQuery(query);
+  };
+
+  // slide
+  const sliderImages = [
+    "https://source.unsplash.com/featured/?furniture", // Random furniture image
+    "https://source.unsplash.com/featured/?sofa",
+    "https://source.unsplash.com/featured/?table",
+    "https://source.unsplash.com/featured/?chair",
+  ];
+  
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Auto-slider effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prevSlide) => (prevSlide + 1) % 4); // 4 slides in the main carousel
+    }, 3000); // Change the slide every 3 seconds
+    return () => clearInterval(interval);
+  }, []);
+  
+  const handleNextSlide = () => {
+    setCurrentSlide((prevSlide) => (prevSlide + 1) % sliderImages.length);
+  };
+
+  const handlePrevSlide = () => {
+    setCurrentSlide((prevSlide) => (prevSlide - 1 + sliderImages.length) % sliderImages.length);
   };
 
   return (
     <>
       <div className="fixed top-0 left-0 right-0 z-50">
-        <Header logotext="Furniture Store" onSearch={() => {}} />
+        <Header logotext="Furniture Store" onSearch={handleSearch} />
+        <div className="flex justify-center mt-4">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search for furniture..."
+            className="p-2 border border-gray-300 rounded w-1/2"
+              />
+        </div>
       </div>
 
-      <div className="min-h-screen bg-gray-50 px-8 pt-24 pb-16">
-        <h2 className="text-3xl font-semibold text-center mb-8">Table Furniture</h2>
 
-        {/* Add Sort Dropdown */}
-        <div className="mb-4 flex justify-end">
+       <div className="p-10 bg-transparent mt-32">
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8 justify-items-center ">
+            {[
+              { label: "Living Room", icon: couchImage, badge: "", badgeColor: "bg-yellow-400", link: "/guest-rliving" },
+              { label: "Bedroom", icon: bedimage, badge: "", badgeColor: "bg-yellow-400", link: "/guest-rbedroom" },
+              { label: "Storage", icon: storeimage, badge: "", badgeColor: "", link: "/guest-rstorage" },
+              { label: "Dining", icon: diningimage, badge: "", badgeColor: "", link: "/guest-rdining" },
+              { label: "Tables", icon: deskimage, badge: "", badgeColor: "", link: "/guest-rtable" },
+            ].map((item) => (
+              <div
+              key={item.label}
+              className="relative flex flex-col items-center transition-transform duration-300 hover:scale-110 hover:text-blue-500 cursor-pointer"
+              onClick={() => navigate(item.link)}
+              >
+              {item.badge && (
+                <span
+                className={`absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-2 py-1 text-xs text-white rounded-md ${item.badgeColor}`}
+                >
+                {item.badge}
+                </span>
+              )}
+              <img src={item.icon} alt={item.label} className="w-14 h-14 mb-2" />
+              <span className="text-sm font-medium text-gray-700">{item.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Centered Last Two Items */}
+          <div className="flex justify-center gap-28 mt-20">
+            {[
+              { label: "Chairs", icon: chairimage, badge: "", badgeColor: "", link: "/guest-rchairs" },
+              { label: "Best Deals", icon: dealimage, badge: "", badgeColor: "", link: "/guest-rdeals" },
+              { label: "Mattress", icon: mattress, badge: "", badgeColor: "", link: "/guest-rmattress" },
+            ].map((item) => (
+              <div
+              key={item.label}
+              className="relative flex flex-col items-center transition-transform duration-300 hover:scale-110 hover:text-blue-500 cursor-pointer"
+              onClick={() => navigate(item.link)}
+              >
+              {item.badge && (
+                <span
+                className={`absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-2 py-1 text-xs text-white rounded-md ${item.badgeColor}`}
+                >
+                {item.badge}
+                </span>
+              )}
+              <img src={item.icon} alt={item.label} className="w-14 h-14 mb-2" />
+              <span className="text-sm font-medium text-gray-700">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Image Slider Section */}
+        <div className="relative w-full max-w-7xl mx-auto mt-16 overflow-hidden rounded-2xl shadow-2xl">
+          {/* Background pattern */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-teal-50 opacity-80"></div>
+          
+          {/* Auto-slide animation with right-to-left movement */}
+          <div className="flex transition-all duration-700 ease-in-out h-[500px]"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+            {[
+              "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80", // Modern living room furniture
+              "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1674&q=80", // Elegant sofa set
+              "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1674&q=80", // Dining room set
+              "https://images.unsplash.com/photo-1551298370-9d3d53740c72?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80", // Bedroom furniture
+            ].map((image, index) => (
+              <div key={index} className="w-full flex-shrink-0 relative slide-animation">
+                {/* Background Image with Parallax Effect and Right-to-Left Animation */}
+                <div 
+                  className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ${
+                    currentSlide === index ? 'opacity-100 scale-110 animate-slowZoom slide-in-right' : 'opacity-0 scale-100 slide-out-left'
+                  }`}
+                  style={{ 
+                    backgroundImage: `url(${image})`,
+                    animation: currentSlide === index ? 'kenburns 20s ease-in-out infinite alternate' : 'none'
+                  }}
+                ></div>
+                
+                {/* Content Overlay with Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent flex flex-col justify-center items-start text-white p-12 space-y-4">
+                  <div className={`w-2/3 transition-all duration-700 ${
+                    currentSlide === index ? 'slideInRightAnimation opacity-100' : 'translate-x-full opacity-0'
+                  }`} style={{ transitionDelay: currentSlide === index ? '300ms' : '0ms' }}>
+                    <span className={`inline-block bg-yellow-500 text-black font-bold px-3 py-1 rounded-full mb-4 transform -rotate-2 transition-all duration-700 ${
+                      currentSlide === index ? 'slideInRightAnimation opacity-100' : 'translate-x-full opacity-0'
+                    }`} style={{ transitionDelay: currentSlide === index ? '400ms' : '0ms' }}>
+                      {index === 0 && "LIMITED TIME OFFER"}
+                      {index === 1 && "EXCLUSIVE DEAL"}
+                      {index === 2 && "NEW ARRIVALS"}
+                      {index === 3 && "MEMBER SPECIAL"}
+                    </span>
+                    
+                    <h2 className={`text-4xl font-extrabold tracking-tight leading-tight transition-all duration-700 ${
+                      currentSlide === index ? 'slideInRightAnimation opacity-100' : 'translate-x-full opacity-0'
+                    }`} style={{ transitionDelay: currentSlide === index ? '500ms' : '0ms' }}>
+                      {index === 0 && "Transform Your Home with 50% Off All Furniture"}
+                      {index === 1 && "Buy One, Get One Free on Premium Sofas"}
+                      {index === 2 && "Artisan-Crafted Tables & Chairs Collection"}
+                      {index === 3 && "Designer Furniture at Warehouse Prices"}
+                    </h2>
+                    
+                    <p className={`mt-4 text-lg text-gray-200 max-w-md transition-all duration-700 ${
+                      currentSlide === index ? 'slideInRightAnimation opacity-100' : 'translate-x-full opacity-0'
+                    }`} style={{ transitionDelay: currentSlide === index ? '600ms' : '0ms' }}>
+                      {index === 0 && "Elevate your living space with our curated selection of luxury furniture at unbeatable prices."}
+                      {index === 1 && "Double your comfort with our BOGO offer on our most popular sofa designs."}
+                      {index === 2 && "Handcrafted with premium materials to bring timeless elegance to your home."}
+                      {index === 3 && "Experience luxury without the price tag - exclusive member discounts available now."}
+                    </p>
+                    
+                    <button className={`mt-6 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-lg transform transition-all duration-700 hover:scale-105 hover:shadow-lg flex items-center group ${
+                      currentSlide === index ? 'slideInRightAnimation opacity-100' : 'translate-x-full opacity-0'
+                    }`} style={{ transitionDelay: currentSlide === index ? '700ms' : '0ms' }}>
+                      Shop Now
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Slide Indicators with Animation */}
+          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
+            {[0, 1, 2, 3].map((index) => (
+              <button 
+                key={index} 
+                onClick={() => setCurrentSlide(index)}
+                className={`h-3 rounded-full transition-all duration-300 ease-out ${
+                  currentSlide === index ? 'bg-yellow-500 w-10' : 'bg-white/50 hover:bg-white w-3'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+          
+          {/* Navigation Arrows with Animation */}
+          <button
+            className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-white/40 transition-all hover:scale-110 hover:shadow-lg"
+            onClick={handlePrevSlide}
+            aria-label="Previous slide"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-white/40 transition-all hover:scale-110 hover:shadow-lg"
+            onClick={handleNextSlide}
+            aria-label="Next slide"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* CSS Keyframes for Ken Burns effect and slide animations */}
+        <style>{`
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          
+          @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-100%); opacity: 0; }
+          }
+          
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+          }
+          
+          @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          
+          @keyframes slideOutLeft {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-100%); opacity: 0; }
+          }
+          
+          .slideInRightAnimation {
+            animation: slideInRight 0.8s forwards ease-out; 
+          }
+          
+          .slide-in-right {
+            animation: slideInRight 0.8s forwards ease-out;
+          }
+          
+          .slide-out-left {
+            animation: slideOutLeft 0.8s forwards ease-out;
+          }
+          
+          .slide-animation {
+            transition: transform 0.7s ease-in-out;
+          }
+        `}</style>
+
+      {/* icons */}
+      <div className="min-h-screen bg-gray-50 px-8 pt-24 pb-16">
+            <h2 className="text-3xl font-semibold text-center mb-8">Mattress Furniture</h2>
+        
+        {/* Replace the old sorting UI with the new one */}
+        {/* Sort and Filter Section */}
+        <div className="flex justify-between items-center mt-12 px-6">
+          <div>
+            <h2 className="text-4xl font-sans text-gray-800 section-title">Deals of the day</h2>
+            <p className="text-lg text-gray-600 mt-2">Our latest collection</p>
+          </div>
+          
+          {/* Sort Dropdown */}
           <div className="relative" ref={sortRef}>
             <button
               onClick={() => setShowSortOptions(!showSortOptions)}
@@ -226,8 +504,8 @@ const GuestTable: React.FC = () => {
                     Sort Options
                   </h3>
                   
-                  { [
-                    { id: "price", label: "Price", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+                  {[
+                    { id: "rent_price", label: "Price", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0118 0z" },
                     { id: "title", label: "Name", icon: "M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" },
                     { id: "created_at", label: "Date Added", icon: "M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" }
                   ].map((option) => (
@@ -244,7 +522,7 @@ const GuestTable: React.FC = () => {
                         </div>
                         {sortBy === option.id && (
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-600" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 011.414 0z" clipRule="evenodd" />
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 011.414 0z" clipRule="evenodd" />
                           </svg>
                         )}
                       </button>
@@ -257,13 +535,19 @@ const GuestTable: React.FC = () => {
                       <div className="mt-1 flex space-x-4">
                         <button
                           className={`px-3 py-1.5 rounded text-sm ${sortOrder === "asc" ? "bg-yellow-100 text-yellow-800 font-medium" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                          onClick={() => setSortOrder("asc")}
+                           onClick={() => {
+                              setSortOrder("asc");
+                              setPage(1); // trigger API refresh
+                            }}
                         >
                           Ascending
                         </button>
                         <button
                           className={`px-3 py-1.5 rounded text-sm ${sortOrder === "desc" ? "bg-yellow-100 text-yellow-800 font-medium" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                          onClick={() => setSortOrder("desc")}
+                          onClick={() => {
+                            setSortOrder("desc");
+                            setPage(1); // trigger API refresh
+                          }}
                         >
                           Descending
                         </button>
@@ -275,9 +559,37 @@ const GuestTable: React.FC = () => {
             )}
           </div>
         </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-8">
-          {displayedProducts.map((product, index) => (
+        
+        {/* Add missing animation styles */}
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          
+          .animate-fadeIn {
+            animation: fadeIn 0.2s ease-out forwards;
+          }
+          
+          .section-title {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+          }
+          
+          .section-title:after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 3px;
+            background: #f9d423;
+            bottom: -10px;
+            left: 0;
+          }
+        `}</style>
+        
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mt-8 px-4">
+          {products.map((product, index) => (
             <div
               key={product._id}
               className="bg-white rounded-xl shadow-md overflow-hidden w-full h-full flex flex-col cursor-pointer card-hover"
@@ -315,7 +627,7 @@ const GuestTable: React.FC = () => {
               
               <div className="p-4 flex-grow flex flex-col justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">{product.category || 'Table'}</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">{product.category}</h3>
                   <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                     {product.description}
                   </p>
@@ -334,7 +646,12 @@ const GuestTable: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleAddToCart(e);
+                      const token = localStorage.getItem('token');
+                      if (!token) {
+                        setShowLoginPopup(true);
+                        return;
+                      }
+                      showProductPreview(product);
                     }}
                     className="w-full py-2.5 px-4 bg-yellow-400 text-gray-900 rounded-lg font-medium hover:bg-yellow-500 transition-all transform hover:scale-105 focus:ring-2 focus:ring-yellow-300 flex items-center justify-center space-x-2"
                   >
@@ -349,7 +666,7 @@ const GuestTable: React.FC = () => {
           ))}
         </div>
 
-        {/* CSS animations */}
+        {/* Add animation keyframes */}
         <style>{`
           @keyframes fadeSlideUp {
             from {
@@ -385,13 +702,57 @@ const GuestTable: React.FC = () => {
             -webkit-line-clamp: 2;
           }
           
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+          ${/* Merge with existing animation styles */ ''}
+          @keyframes kenburns {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
           }
           
-          .animate-fadeIn {
-            animation: fadeIn 0.2s ease-out forwards;
+          ${/* Keep existing keyframes */ ''}
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          
+          @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-100%); opacity: 0; }
+          }
+          
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+          }
+          
+          @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          
+          @keyframes slideOutLeft {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-100%); opacity: 0; }
+          }
+          
+          .slideInRightAnimation {
+            animation: slideInRight 0.8s forwards ease-out; 
+          }
+          
+          .slide-in-right {
+            animation: slideInRight 0.8s forwards ease-out;
+          }
+          
+          .slide-out-left {
+            animation: slideOutLeft 0.8s forwards ease-out;
+          }
+          
+          .slide-animation {
+            transition: transform 0.7s ease-in-out;
           }
         `}</style>
 
@@ -399,74 +760,71 @@ const GuestTable: React.FC = () => {
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-800">{previewProduct.title}</h3>
-                <button onClick={closePreview} className="text-gray-500 hover:text-gray-700">X</button>
+          <h3 className="text-xl font-bold text-gray-800">{previewProduct.title}</h3>
+          <button onClick={closePreview} className="text-gray-500 hover:text-gray-700">X</button>
               </div>
               <img
-                src={previewProduct.images && previewProduct.images.length > 0 ? previewProduct.images[0] : previewProduct.image}
-                alt={previewProduct.title}
-                className="w-full h-64 object-cover mb-4"
+          src={previewProduct.images && previewProduct.images.length > 0 ? previewProduct.images[0] : previewProduct.image}
+          alt={previewProduct.title}
+          className="w-full h-64 object-cover mb-4"
               />
-              <div className="mt-4 text-lg font-bold">${previewProduct.rent_price} / day</div>
+              <div className="mt-4 text-lg font-bold">${previewProduct.rent_price}/day</div>
               <div className="mt-4 flex items-center">
-                <label className="mr-2 text-gray-700">Quantity:</label>
-                <input
-                  type="number"
-                  value={quantity}
-                  min={1}
-                  onChange={(e) => setQuantity(parseInt(e.target.value))}
-                  className="w-16 p-2 border border-gray-300 rounded"
-                />
+          <label className="mr-2 text-gray-700">Quantity:</label>
+          <input
+            type="number"
+            value={quantity}
+            min={1}
+            onChange={(e) => setQuantity(parseInt(e.target.value))}
+            className="w-16 p-2 border border-gray-300 rounded"
+          />
               </div>
               <div className="mt-6 flex justify-center">
-                <button
-                  onClick={(e) => {
-                    handleAddToCart(e);
-                    setShowLoginPopup(true);
-                  }}
-                  className="py-2 px-4 bg-yellow-400 rounded-full hover:bg-yellow-500 transition-all transform hover:scale-105 mt-2"
-                >
-                  Add to Cart
-                </button>
+          <button
+            onClick={() => handleAddToCart(previewProduct, quantity)}
+            className="py-2 px-4 bg-teal-600 text-white rounded-full hover:bg-teal-500 transition-all transform hover:scale-105"
+          >
+            Add to Cart
+          </button>
               </div>
             </div>
           </div>
         )}
 
         {showLoginPopup && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm transition-all duration-300">
-            <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl transform transition-all duration-300 scale-100">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-800">Login Required</h3>
-                <button onClick={closeLoginPopup} className="text-gray-500 hover:text-gray-700 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <p className="text-sm text-gray-600 text-center mb-2">Please log in to add items to your cart or wishlist.</p>
-                <p className="text-xs text-gray-500 text-center">Create an account to enjoy a personalized shopping experience!</p>
-              </div>
-              <div className="flex justify-center space-x-3">
-                <button
-                  onClick={closeLoginPopup}
-                  className="py-2 px-4 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all transform hover:scale-105"
-                >
-                  Continue Browsing
-                </button>
-                <button
-                  onClick={() => navigate('/login')}
-                  className="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all transform hover:scale-105 shadow-md"
-                >
-                  Log In
-                </button>
-              </div>
-            </div>
-          </div>
+         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm transition-all duration-300">
+         <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl transform transition-all duration-300 scale-100">
+           <div className="flex justify-between items-center mb-4">
+             <h3 className="text-xl font-bold text-gray-800">Login Required</h3>
+             <button onClick={closeLoginPopup} className="text-gray-500 hover:text-gray-700 transition-colors">
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+               </svg>
+             </button>
+           </div>
+           <div className="mb-6">
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+             </svg>
+             <p className="text-sm text-gray-600 text-center mb-2">Please log in to add items to your cart or wishlist.</p>
+             <p className="text-xs text-gray-500 text-center">Create an account to enjoy a personalized shopping experience!</p>
+           </div>
+           <div className="flex justify-center space-x-3">
+             <button
+               onClick={closeLoginPopup}
+               className="py-2 px-4 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all transform hover:scale-105"
+             >
+               Continue Browsing
+             </button>
+             <button
+               onClick={() => navigate('/login')}
+               className="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all transform hover:scale-105 shadow-md"
+             >
+               Log In
+             </button>
+           </div>
+         </div>
+       </div>
         )}
 
         <div className="flex justify-center items-center mt-8">
@@ -488,12 +846,31 @@ const GuestTable: React.FC = () => {
             Next
           </button>
         </div>
+      </div>
           {/* ChatWidget */}
           <ChatWidget currentSystemMessage="Welcome to our furniture store! I can help you find the perfect furniture for your home or assist you with any questions you may have." />
-        <Footer />
-      </div>
+      <Footer />
     </>
   );
 };
 
-export default GuestTable;
+function useCart() {
+  const addToCart = (product: Product, quantity: number) => {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const existingProductIndex = cart.findIndex((item: Product) => item._id === product._id);
+
+    if (existingProductIndex >= 0) {
+      cart[existingProductIndex].quantity += quantity;
+    } else {
+      cart.push({ ...product, quantity });
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+  };
+
+  return { addToCart };
+}
+
+export default GuestrTable;
+
+
