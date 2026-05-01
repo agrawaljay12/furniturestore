@@ -44,7 +44,7 @@ const Rent: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10); // 12 cards per page
   const [totalPages, setTotalPages] = useState(1);
-  const [sortBy, setSortBy] = useState("price");
+  const [sortBy, setSortBy] = useState("rent_price");
   const [sortOrder, setSortOrder] = useState("asc");
   const [showSortOptions, setShowSortOptions] = useState(false); // Added for dropdown toggle
 
