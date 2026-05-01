@@ -37,7 +37,7 @@ interface Product {
   totalPrice?: string; // To hold the total price for each item
 }
 
-const Guestbedroom: React.FC = () => {
+const GuestrBedroom: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]); // List all products
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -871,6 +871,6 @@ function useCart() {
   return { addToCart };
 }
 
-export default Guestbedroom;
+export default GuestrBedroom;
 
 
