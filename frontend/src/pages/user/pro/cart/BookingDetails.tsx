@@ -55,7 +55,7 @@ const BookingDetailsPage: React.FC = () => {
   const getImageUrl = (imagePath: string | undefined, paymentId?: string): string => {
     if (!imagePath) {
       if (paymentId) {
-        return `http://localhost:10007/api/v1/payments/${paymentId}/receipt`;
+        return `https://furnspace.onrender.com/api/v1/payments/${paymentId}/receipt`;
       }
       return "https://placehold.co/300x200/e0e0e0/808080?text=No+Image";
     }
@@ -63,7 +63,7 @@ const BookingDetailsPage: React.FC = () => {
       return imagePath;
     }
     const formattedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    return `http://localhost:10007${formattedPath}`;
+    return `https://furnspace.onrender.com${formattedPath}`;
   };
 
   const fetchBookingDetails = async () => {
@@ -78,7 +78,7 @@ const BookingDetailsPage: React.FC = () => {
     setErrorCode(null);
 
     try {
-      const response = await fetch(`http://localhost:10007/api/v1/booking/get_with_furniture/${id}`);
+      const response = await fetch(`https://furnspace.onrender.com/api/v1/booking/get_with_furniture/${id}`);
       if (!response.ok) {
         setErrorCode(response.status);
         if (response.status === 500) {
@@ -98,7 +98,7 @@ const BookingDetailsPage: React.FC = () => {
             "User-Agent": "Thunder Client (https://www.thunderclient.com)"
           };
           
-          const userResponse = await fetch(`http://localhost:10007/api/v1/auth/user/fetch/${data.data.user_id}`, {
+          const userResponse = await fetch(`https://furnspace.onrender.com/api/v1/auth/user/fetch/${data.data.user_id}`, {
             method: "GET",
             headers: headersList
           });
@@ -140,7 +140,7 @@ const BookingDetailsPage: React.FC = () => {
             furniture.image = furniture.images[0];
           }
           if ((!furniture.images || furniture.images.length === 0) && furniture._id) {
-            const directImageUrl = `http://localhost:10007/api/v1/furniture/${furniture._id}/image`;
+            const directImageUrl = `https://furnspace.onrender.com/api/v1/furniture/${furniture._id}/image`;
             furniture.images = [directImageUrl];
             furniture.image = directImageUrl;
           }
@@ -169,9 +169,9 @@ const BookingDetailsPage: React.FC = () => {
           if (isExternalPaymentId) {
             // Skip the first API call for external payment IDs that likely won't be in our database
             console.log(`External payment ID detected: ${data.data.payment_id}. Using receipt endpoint directly.`);
-            data.data.payment_image = `http://localhost:10007/api/v1/payments/${data.data.payment_id}/receipt`;
+            data.data.payment_image = `https://furnspace.onrender.com/api/v1/payments/${data.data.payment_id}/receipt`;
           } else {
-            const paymentResponse = await fetch(`http://localhost:10007/api/v1/payments/${data.data.payment_id}`);
+            const paymentResponse = await fetch(`https://furnspace.onrender.com/api/v1/payments/${data.data.payment_id}`);
             if (paymentResponse.ok) {
               const paymentData = await paymentResponse.json();
               if (paymentData && paymentData.data) {
@@ -179,12 +179,12 @@ const BookingDetailsPage: React.FC = () => {
               }
             } else {
               console.log(`Payment API returned ${paymentResponse.status} for ID: ${data.data.payment_id}`);
-              data.data.payment_image = `http://localhost:10007/api/v1/payments/${data.data.payment_id}/receipt`;
+              data.data.payment_image = `https://furnspace.onrender.com/api/v1/payments/${data.data.payment_id}/receipt`;
             }
           }
         } catch (paymentError) {
           console.error(`Error fetching payment details: ${paymentError}`);
-          data.data.payment_image = `http://localhost:10007/api/v1/payments/${data.data.payment_id}/receipt`;
+          data.data.payment_image = `https://furnspace.onrender.com/api/v1/payments/${data.data.payment_id}/receipt`;
         }
       }
       setBooking(data.data);
@@ -331,7 +331,7 @@ const BookingDetailsPage: React.FC = () => {
                         className="w-full h-auto"
                         onError={(e) => {
                           if (booking.payment_id) {
-                            e.currentTarget.src = `http://localhost:10007/api/v1/payments/${booking.payment_id}/receipt`;
+                            e.currentTarget.src = `https://furnspace.onrender.com/api/v1/payments/${booking.payment_id}/receipt`;
                           } else {
                             e.currentTarget.src = "https://placehold.co/300x200/e0e0e0/808080?text=No+Receipt";
                           }
@@ -382,7 +382,7 @@ const BookingDetailsPage: React.FC = () => {
                         if (furniture.images && furniture.images.length > 1) {
                           e.currentTarget.src = getImageUrl(furniture.images[1]);
                         } else if (furniture._id) {
-                          e.currentTarget.src = `http://localhost:10007/api/v1/furniture/${furniture._id}/image`;
+                          e.currentTarget.src = `https://furnspace.onrender.com/api/v1/furniture/${furniture._id}/image`;
                         } else {
                           e.currentTarget.src = "https://placehold.co/300x200/e0e0e0/808080?text=No+Image";
                         }

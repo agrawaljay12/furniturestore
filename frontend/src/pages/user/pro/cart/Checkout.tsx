@@ -535,7 +535,7 @@ const CheckoutPage: React.FC = () => {
 
       const bodyContent = JSON.stringify(addressData);
 
-      const response = await fetch("http://localhost:10007/api/v1/address/add", {
+      const response = await fetch("https://furnspace.onrender.com/api/v1/address/add", {
         method: "POST",
         body: bodyContent,
         headers: headersList,
