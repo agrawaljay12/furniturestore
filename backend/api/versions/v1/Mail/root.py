@@ -196,29 +196,42 @@ async def send_receipt(request: Request):
         try:
             logger.info(f"Attempting to send email to: {email}")
             
-            # Improved PDF data format detection and handling
             pdf_data_processed = None
-            
-            # Check data type and format
+
             if isinstance(pdf_data, str):
-                # Case 1: Data URI format (starts with data:application/pdf;base64,)
-                if pdf_data.startswith('data:application/pdf;base64,'):
-                    logger.info("Processing PDF data in data URI format")
+
+                # Case 1: Already correct format
+                if pdf_data.startswith("data:application/pdf;base64,"):
+                    logger.info("PDF already in correct data URI format")
                     pdf_data_processed = pdf_data
-                # Case 2: Raw base64 string (most likely from jsPDF's output('base64'))
+
                 else:
+                    logger.info("Attempting to normalize PDF data")
+
                     try:
-                        # Try to decode it to verify it's valid base64
-                        base64.b64decode(pdf_data)
-                        logger.info("Processing PDF data as raw base64 string")
-                        # Convert to the format MAIL.sendReceiptEmail expects
+                        # Try decoding (validate base64)
+                        base64.b64decode(pdf_data, validate=True)
+
                         pdf_data_processed = f"data:application/pdf;base64,{pdf_data}"
-                    except Exception as e:
-                        logger.error(f"Invalid base64 data: {str(e)}")
-                        raise HTTPException(status_code=400, detail="Invalid PDF data format. Not a valid base64 string.")
+
+                    except Exception:
+                        logger.warning("PDF is not valid base64, treating as binary string")
+
+                        try:
+                            # Convert raw string → bytes → base64
+                            encoded = base64.b64encode(pdf_data.encode("latin1")).decode("utf-8")
+                            pdf_data_processed = f"data:application/pdf;base64,{encoded}"
+                        except Exception as e:
+                            logger.error(f"Failed to normalize PDF: {str(e)}")
+                            raise HTTPException(
+                                status_code=400,
+                                detail="Invalid PDF data. Could not process."
+                            )
             else:
-                logger.error(f"PDF data has unexpected type: {type(pdf_data)}")
-                raise HTTPException(status_code=400, detail=f"Unexpected PDF data type: {type(pdf_data)}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Unexpected PDF data type: {type(pdf_data)}"
+                )
             
             # Ensure we have processed data
             if not pdf_data_processed:

@@ -386,14 +386,18 @@ const BookingConfirmation: React.FC = () => {
       doc.text("Thank you for your business!", 105, finalY + 10, { align: "center" });
       doc.text("For support, please contact support@furniturerenting.com", 105, finalY + 15, { align: "center" });
       
-      // Use base64 format instead of datauristring for better compatibility
-      const dataUri = doc.output('datauristring');
-      const pdfBase64 = dataUri.split(',')[1];
+      // // Use base64 format instead of datauristring for better compatibility
+      // // const dataUri = doc.output('datauristring');
+      // // const pdfBase64 = dataUri.split(',')[1];
+      // console.log("PDF generated in base64 format, first 50 chars:", pdfBase64.substring(0, 50));
+
+      const pdf = new jsPDF();
+      const pdfBase64 = pdf.output("datauristring");
       console.log("PDF generated in base64 format, first 50 chars:", pdfBase64.substring(0, 50));
       
       try {
         // Send to API with better error handling
-        console.log(`Sending receipt to email: ${email}`);
+        console.log(`Sending receipt to email: ${email}`);      
         const response = await fetch('https://furnspace.onrender.com/api/v1/mail/send-receipt', {
           method: 'POST',
           headers: {
