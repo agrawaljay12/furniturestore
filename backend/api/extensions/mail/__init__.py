@@ -7,7 +7,9 @@ from email.mime.base import MIMEBase
 from email import encoders
 from dotenv import load_dotenv 
 import logging
-import requests
+
+from fastapi import requests
+# import requests
 
 
 # Set up logging
