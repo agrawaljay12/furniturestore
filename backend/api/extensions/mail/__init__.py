@@ -8,6 +8,8 @@ from email import encoders
 from dotenv import load_dotenv 
 import base64
 import logging
+import requests
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +26,9 @@ class MAIL:
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
     MAIL_USE_TLS = os.getenv("MAIL_USE_TLS") == "True"
     MAIL_USE_SSL = os.getenv("MAIL_USE_SSL") == "True"
+
+    # SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+    
 
     @staticmethod
     def _create_server_connection():
@@ -201,6 +206,67 @@ class MAIL:
         except Exception as e:
             logger.error(f"Error sending receipt email: {str(e)}")
             raise
+
+
+    # @staticmethod
+    # def sendReceiptEmail(to, from_name, subject, body, html, pdf_data=None, pdf_name="receipt.pdf"):
+    #     try:
+    #         logger.info(f"Sending email via SendGrid to: {to}")
+
+    #         attachment = None
+
+    #         if pdf_data:
+    #             if pdf_data.startswith("data:application/pdf;base64,"):
+    #                 pdf_base64 = pdf_data.split(",")[1]
+    #             else:
+    #                 pdf_base64 = pdf_data
+
+    #             attachment = {
+    #                 "content": pdf_base64,
+    #                 "type": "application/pdf",
+    #                 "filename": pdf_name,
+    #                 "disposition": "attachment"
+    #             }
+
+    #         payload = {
+    #             "personalizations": [
+    #                 {
+    #                     "to": [{"email": to}],
+    #                     "subject": subject
+    #                 }
+    #             ],
+    #             "from": {
+    #                 "email": MAIL.MAIL_USERNAME,
+    #                 "name": from_name
+    #             },
+    #             "content": [
+    #                 {"type": "text/plain", "value": body},
+    #                 {"type": "text/html", "value": html}
+    #             ]
+    #         }
+
+    #         if attachment:
+    #             payload["attachments"] = [attachment]
+
+    #         response = requests.post(
+    #             "https://api.sendgrid.com/v3/mail/send",
+    #             headers={
+    #                 "Authorization": f"Bearer {MAIL.SENDGRID_API_KEY}",
+    #                 "Content-Type": "application/json"
+    #             },
+    #             json=payload
+    #         )
+
+    #         if response.status_code >= 400:
+    #             logger.error(response.text)
+    #             raise Exception(f"SendGrid error: {response.text}")
+
+    #         logger.info("Email sent successfully via SendGrid")
+    #         return True
+
+    #     except Exception as e:
+    #         logger.error(f"Error sending email: {str(e)}")
+    #         raise
 
 
 # Example of Sending. 

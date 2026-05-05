@@ -385,15 +385,16 @@ const BookingConfirmation: React.FC = () => {
       doc.setFontSize(10);
       doc.text("Thank you for your business!", 105, finalY + 10, { align: "center" });
       doc.text("For support, please contact support@furniturerenting.com", 105, finalY + 15, { align: "center" });
+      // const pdf = new jsPDF();
+      // const pdfBase64 = doc.output("datauristring");
+      // console.log("PDF generated in base64 format, first 50 chars:", pdfBase64.substring(0, 50));
       
       // // Use base64 format instead of datauristring for better compatibility
-      // // const dataUri = doc.output('datauristring');
-      // // const pdfBase64 = dataUri.split(',')[1];
-      // console.log("PDF generated in base64 format, first 50 chars:", pdfBase64.substring(0, 50));
-
-      const pdf = new jsPDF();
-      const pdfBase64 = pdf.output("datauristring");
+      const dataUri = doc.output('datauristring');
+      const pdfBase64 = dataUri.split(',')[1];
       console.log("PDF generated in base64 format, first 50 chars:", pdfBase64.substring(0, 50));
+
+     
       
       try {
         // Send to API with better error handling
