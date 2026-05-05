@@ -8,6 +8,7 @@ from email import encoders
 from dotenv import load_dotenv 
 import base64
 import logging
+import requests
 
 
 # Set up logging
@@ -110,162 +111,162 @@ class MAIL:
         with MAIL._create_server_connection() as server:
             server.send_message(msg)
 
-    @staticmethod
-    def sendReceiptEmail(to, from_name, subject, body, html, pdf_data=None, pdf_name="receipt.pdf"):
-        """
-        Send an email with a receipt as an attachment.
-        
-        Args:
-            to: Recipient email address
-            from_name: Sender name
-            subject: Email subject
-            body: Plain text body
-            html: HTML body
-            pdf_data: Base64 encoded PDF data or raw PDF bytes
-            pdf_name: Name of the PDF file attachment
-        """
-        try:
-            logger.info(f"Preparing to send receipt email to: {to}")
-            
-            msg = MIMEMultipart()
-            msg["From"] = f"{from_name} <{MAIL.MAIL_USERNAME}>"
-            msg["To"] = to
-            msg["Subject"] = subject
-            
-            # Add message ID and date for better email tracking
-            from email.utils import make_msgid, formatdate
-            msg["Message-ID"] = make_msgid(domain=MAIL.MAIL_USERNAME.split('@')[1])
-            msg["Date"] = formatdate(localtime=True)
-            
-            # Add plain text and HTML parts
-            msg.attach(MIMEText(body, "plain"))
-            msg.attach(MIMEText(html, "html"))
-            
-            if pdf_data:
-                # Decode base64 data if it's in that format
-                try:
-                    pdf_binary = None
-                    
-                    # Log the type and beginning of the data to help with debugging
-                    logger.info(f"PDF data type: {type(pdf_data)}")
-                    if isinstance(pdf_data, str):
-                        preview = pdf_data[:50] + "..." if len(pdf_data) > 50 else pdf_data
-                        logger.info(f"PDF data preview: {preview}")
-                    
-                    # Case 1: Data URI format
-                    if isinstance(pdf_data, str) and pdf_data.startswith('data:application/pdf;base64,'):
-                        logger.info("Decoding PDF data in data URI format")
-                        pdf_binary = base64.b64decode(pdf_data.split(',')[1])
-                    # Case 2: Raw base64 string
-                    elif isinstance(pdf_data, str):
-                        try:
-                            logger.info("Attempting to decode as base64")
-                            pdf_binary = base64.b64decode(pdf_data)
-                        except Exception as decode_error:
-                            logger.warning(f"Base64 decoding failed: {str(decode_error)}")
-                            logger.info("Not valid base64, using as raw text")
-                            pdf_binary = pdf_data.encode('utf-8')
-                    # Case 3: Already binary data
-                    elif isinstance(pdf_data, bytes):
-                        logger.info("Using provided binary data directly")
-                        pdf_binary = pdf_data
-                    else:
-                        logger.warning(f"Unexpected PDF data type: {type(pdf_data)}")
-                        if pdf_data is None:
-                            raise ValueError("PDF data is None")
-                        # Try to convert to string and then to bytes as a last resort
-                        pdf_binary = str(pdf_data).encode('utf-8')
-                    
-                    # Validate we have binary data for the PDF
-                    if not pdf_binary:
-                        raise ValueError("Failed to get valid PDF binary data")
-                    
-                    if len(pdf_binary) < 10:
-                        raise ValueError(f"PDF data suspiciously short: {len(pdf_binary)} bytes")
-                    
-                    # Attach the PDF
-                    logger.info(f"Attaching PDF as: {pdf_name} ({len(pdf_binary)} bytes)")
-                    part = MIMEBase("application", "pdf")
-                    part.set_payload(pdf_binary)
-                    encoders.encode_base64(part)
-                    part.add_header("Content-Disposition", f"attachment; filename={pdf_name}")
-                    part.add_header("Content-ID", f"<{pdf_name}>")
-                    msg.attach(part)
-                    
-                except Exception as e:
-                    logger.error(f"Error processing PDF attachment: {str(e)}")
-                    raise
-            
-            with MAIL._create_server_connection() as server:
-                logger.info(f"Sending email to: {to}")
-                server.send_message(msg)
-                logger.info("Email sent successfully")
-                return True
-                
-        except Exception as e:
-            logger.error(f"Error sending receipt email: {str(e)}")
-            raise
-
-
     # @staticmethod
     # def sendReceiptEmail(to, from_name, subject, body, html, pdf_data=None, pdf_name="receipt.pdf"):
+    #     """
+    #     Send an email with a receipt as an attachment.
+        
+    #     Args:
+    #         to: Recipient email address
+    #         from_name: Sender name
+    #         subject: Email subject
+    #         body: Plain text body
+    #         html: HTML body
+    #         pdf_data: Base64 encoded PDF data or raw PDF bytes
+    #         pdf_name: Name of the PDF file attachment
+    #     """
     #     try:
-    #         logger.info(f"Sending email via SendGrid to: {to}")
-
-    #         attachment = None
-
+    #         logger.info(f"Preparing to send receipt email to: {to}")
+            
+    #         msg = MIMEMultipart()
+    #         msg["From"] = f"{from_name} <{MAIL.MAIL_USERNAME}>"
+    #         msg["To"] = to
+    #         msg["Subject"] = subject
+            
+    #         # Add message ID and date for better email tracking
+    #         from email.utils import make_msgid, formatdate
+    #         msg["Message-ID"] = make_msgid(domain=MAIL.MAIL_USERNAME.split('@')[1])
+    #         msg["Date"] = formatdate(localtime=True)
+            
+    #         # Add plain text and HTML parts
+    #         msg.attach(MIMEText(body, "plain"))
+    #         msg.attach(MIMEText(html, "html"))
+            
     #         if pdf_data:
-    #             if pdf_data.startswith("data:application/pdf;base64,"):
-    #                 pdf_base64 = pdf_data.split(",")[1]
-    #             else:
-    #                 pdf_base64 = pdf_data
-
-    #             attachment = {
-    #                 "content": pdf_base64,
-    #                 "type": "application/pdf",
-    #                 "filename": pdf_name,
-    #                 "disposition": "attachment"
-    #             }
-
-    #         payload = {
-    #             "personalizations": [
-    #                 {
-    #                     "to": [{"email": to}],
-    #                     "subject": subject
-    #                 }
-    #             ],
-    #             "from": {
-    #                 "email": MAIL.MAIL_USERNAME,
-    #                 "name": from_name
-    #             },
-    #             "content": [
-    #                 {"type": "text/plain", "value": body},
-    #                 {"type": "text/html", "value": html}
-    #             ]
-    #         }
-
-    #         if attachment:
-    #             payload["attachments"] = [attachment]
-
-    #         response = requests.post(
-    #             "https://api.sendgrid.com/v3/mail/send",
-    #             headers={
-    #                 "Authorization": f"Bearer {MAIL.SENDGRID_API_KEY}",
-    #                 "Content-Type": "application/json"
-    #             },
-    #             json=payload
-    #         )
-
-    #         if response.status_code >= 400:
-    #             logger.error(response.text)
-    #             raise Exception(f"SendGrid error: {response.text}")
-
-    #         logger.info("Email sent successfully via SendGrid")
-    #         return True
-
+    #             # Decode base64 data if it's in that format
+    #             try:
+    #                 pdf_binary = None
+                    
+    #                 # Log the type and beginning of the data to help with debugging
+    #                 logger.info(f"PDF data type: {type(pdf_data)}")
+    #                 if isinstance(pdf_data, str):
+    #                     preview = pdf_data[:50] + "..." if len(pdf_data) > 50 else pdf_data
+    #                     logger.info(f"PDF data preview: {preview}")
+                    
+    #                 # Case 1: Data URI format
+    #                 if isinstance(pdf_data, str) and pdf_data.startswith('data:application/pdf;base64,'):
+    #                     logger.info("Decoding PDF data in data URI format")
+    #                     pdf_binary = base64.b64decode(pdf_data.split(',')[1])
+    #                 # Case 2: Raw base64 string
+    #                 elif isinstance(pdf_data, str):
+    #                     try:
+    #                         logger.info("Attempting to decode as base64")
+    #                         pdf_binary = base64.b64decode(pdf_data)
+    #                     except Exception as decode_error:
+    #                         logger.warning(f"Base64 decoding failed: {str(decode_error)}")
+    #                         logger.info("Not valid base64, using as raw text")
+    #                         pdf_binary = pdf_data.encode('utf-8')
+    #                 # Case 3: Already binary data
+    #                 elif isinstance(pdf_data, bytes):
+    #                     logger.info("Using provided binary data directly")
+    #                     pdf_binary = pdf_data
+    #                 else:
+    #                     logger.warning(f"Unexpected PDF data type: {type(pdf_data)}")
+    #                     if pdf_data is None:
+    #                         raise ValueError("PDF data is None")
+    #                     # Try to convert to string and then to bytes as a last resort
+    #                     pdf_binary = str(pdf_data).encode('utf-8')
+                    
+    #                 # Validate we have binary data for the PDF
+    #                 if not pdf_binary:
+    #                     raise ValueError("Failed to get valid PDF binary data")
+                    
+    #                 if len(pdf_binary) < 10:
+    #                     raise ValueError(f"PDF data suspiciously short: {len(pdf_binary)} bytes")
+                    
+    #                 # Attach the PDF
+    #                 logger.info(f"Attaching PDF as: {pdf_name} ({len(pdf_binary)} bytes)")
+    #                 part = MIMEBase("application", "pdf")
+    #                 part.set_payload(pdf_binary)
+    #                 encoders.encode_base64(part)
+    #                 part.add_header("Content-Disposition", f"attachment; filename={pdf_name}")
+    #                 part.add_header("Content-ID", f"<{pdf_name}>")
+    #                 msg.attach(part)
+                    
+    #             except Exception as e:
+    #                 logger.error(f"Error processing PDF attachment: {str(e)}")
+    #                 raise
+            
+    #         with MAIL._create_server_connection() as server:
+    #             logger.info(f"Sending email to: {to}")
+    #             server.send_message(msg)
+    #             logger.info("Email sent successfully")
+    #             return True
+                
     #     except Exception as e:
-    #         logger.error(f"Error sending email: {str(e)}")
+    #         logger.error(f"Error sending receipt email: {str(e)}")
     #         raise
+
+
+    @staticmethod
+    def sendReceiptEmail(to, from_name, subject, body, html, pdf_data=None, pdf_name="receipt.pdf"):
+        try:
+            logger.info(f"Sending email via SendGrid to: {to}")
+
+            attachment = None
+
+            if pdf_data:
+                if pdf_data.startswith("data:application/pdf;base64,"):
+                    pdf_base64 = pdf_data.split(",")[1]
+                else:
+                    pdf_base64 = pdf_data
+
+                attachment = {
+                    "content": pdf_base64,
+                    "type": "application/pdf",
+                    "filename": pdf_name,
+                    "disposition": "attachment"
+                }
+
+            payload = {
+                "personalizations": [
+                    {
+                        "to": [{"email": to}],
+                        "subject": subject
+                    }
+                ],
+                "from": {
+                    "email": MAIL.MAIL_USERNAME,
+                    "name": from_name
+                },
+                "content": [
+                    {"type": "text/plain", "value": body},
+                    {"type": "text/html", "value": html}
+                ]
+            }
+
+            if attachment:
+                payload["attachments"] = [attachment]
+
+            response = requests.post(
+                "https://api.sendgrid.com/v3/mail/send",
+                headers={
+                    "Authorization": f"Bearer {MAIL.SENDGRID_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json=payload
+            )
+
+            if response.status_code >= 400:
+                logger.error(response.text)
+                raise Exception(f"SendGrid error: {response.text}")
+
+            logger.info("Email sent successfully via SendGrid")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error sending email: {str(e)}")
+            raise
 
 
 # Example of Sending. 
