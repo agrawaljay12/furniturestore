@@ -14,7 +14,7 @@ class FileUpload:
     def upload_image(file):
         try:
             result = cloudinary.uploader.upload(file.file)
-            return result["secure_url"]  # ✅ important
+            return result["secure_url"]  # important
         except Exception as e:
             raise Exception(f"Cloudinary upload failed: {str(e)}")
     
